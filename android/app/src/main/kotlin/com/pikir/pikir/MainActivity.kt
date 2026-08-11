@@ -83,7 +83,6 @@ class MainActivity: FlutterActivity() {
 
     private fun startFloatingService() {
         val intent = Intent(this, FloatingService::class.java)
-        // Since minSdk is 31, we always call startForegroundService
         startForegroundService(intent)
     }
 
