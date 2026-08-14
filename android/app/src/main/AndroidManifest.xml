@@ -26,6 +26,18 @@
             </intent-filter>
         </service>
 
+        <!-- Handles the actions on PIKIR's replacement notification, including
+             the mandatory one that reveals the original message. Not exported:
+             only our own notification triggers it. -->
+        <receiver
+            android:name=".NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.pikir.pikir.REVEAL_ORIGINAL" />
+                <action android:name="com.pikir.pikir.EXPLAIN_WARNING" />
+            </intent-filter>
+        </receiver>
+
         <!-- Floating Overlay Service -->
         <service
             android:name=".FloatingService"

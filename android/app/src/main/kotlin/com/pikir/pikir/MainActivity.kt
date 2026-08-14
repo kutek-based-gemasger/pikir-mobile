@@ -14,8 +14,89 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "com.yourdomain.chat_head_app/overlay"
 
+    /** The notification scanner's own channel, one per service. */
+    private val SCANNER_CHANNEL = "com.pikir.pikir/scanner"
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // The scan log lives in the service's own store, because the service
+        // has to keep working with the Flutter engine shut down. Flutter reads
+        // it across this channel rather than reaching into the
+        // shared_preferences plugin's private encoding.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SCANNER_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                val store = ScanLogStore(this)
+                when (call.method) {
+                    "scannerLogs" -> result.success(store.logsJson())
+                    // Only the user can grant notification access, from
+                    // Android's own settings. The app can ask and check; it
+                    // can never switch it on for them.
+                    "checkNotificationAccess" -> {
+                        val flat = Settings.Secure.getString(
+                            contentResolver,
+                            "enabled_notification_listeners",
+                        )
+                        result.success(flat != null && flat.contains(packageName))
+                    }
+                    "openNotificationAccessSettings" -> {
+                        startActivity(
+                            Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS),
+                        )
+                        result.success(null)
+                    }
+                    "scannerIsEnabled" -> result.success(store.isEnabled)
+                    "scannerSetEnabled" -> {
+                        store.isEnabled = call.argument<Boolean>("enabled") ?: true
+                        result.success(null)
+                    }
+                    "scannerClearLogs" -> {
+                        store.clear()
+                        result.success(null)
+                    }
+                    // Mode demo. The real listener ignores our own package,
+                    // otherwise the replacement it posts would be scanned and
+                    // replaced in turn, so a self-posted notification can
+                    // never be intercepted for a recording. This runs the same
+                    // classify, record, and replace path directly rather than
+                    // faking its result, so what the judges see is the real
+                    // behaviour.
+                    "demoFlaggedNotification" -> {
+                        val appLabel = call.argument<String>("appLabel")
+                            ?: "DanaKilat"
+                        val title = call.argument<String>("title").orEmpty()
+                        val text = call.argument<String>("text").orEmpty()
+                        val combined = "$title $text"
+                        val scan = NotificationClassifier.classify(combined)
+                        val id = "log-${System.currentTimeMillis()}-demo"
+
+                        store.record(
+                            id = id,
+                            timeIso = NotificationService.isoNow(),
+                            sourceApp = appLabel,
+                            snippet = NotificationClassifier.snippet(combined),
+                            status = scan.status,
+                            reason = scan.reason,
+                        )
+
+                        if (scan.status == ScanStatus.SUSPICIOUS) {
+                            store.rememberOriginal(id, appLabel, title, text)
+                            NotificationService.postReplacement(
+                                this, id, appLabel, scan.reason,
+                            )
+                        }
+
+                        result.success(
+                            mapOf(
+                                "id" to id,
+                                "status" to scan.status.wire,
+                                "reason" to scan.reason,
+                            ),
+                        )
+                    }
+                    else -> result.notImplemented()
+                }
+            }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {

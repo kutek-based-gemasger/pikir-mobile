@@ -24,7 +24,11 @@ android {
         applicationId = "com.pikir.pikir"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 34
+        // CLAUDE.md section 3 pins this at 30 (Android 11) and says not to
+        // raise it to 34. The API 34 pieces this project uses, the special-use
+        // foreground service type in particular, are already guarded at
+        // runtime by Build.VERSION.SDK_INT checks.
+        minSdk = 30
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
