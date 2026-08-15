@@ -76,7 +76,7 @@ class TujuanPinjamanScreen extends ConsumerWidget {
           PikirButton(
             label: 'Lanjut ke aplikasi',
             variant: PikirButtonVariant.overlayOutlined,
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => leaveIntervention(context, ref),
           ),
           const SizedBox(height: 12),
           Text(

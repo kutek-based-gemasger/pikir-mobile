@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/router/routes.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../core/widgets/widgets.dart';
+import '../intervention_state.dart';
 import '../widgets/intervention_overlay.dart';
 
 /// The local fallback, shown when the analysis cannot answer in time.
@@ -15,14 +18,15 @@ import '../widgets/intervention_overlay.dart';
 ///
 /// The breathing prompt is the whole intervention when the numbers are
 /// unavailable. Ten seconds is often enough for the urgency to pass.
-class FallbackLuringScreen extends StatefulWidget {
+class FallbackLuringScreen extends ConsumerStatefulWidget {
   const FallbackLuringScreen({super.key});
 
   @override
-  State<FallbackLuringScreen> createState() => _FallbackLuringScreenState();
+  ConsumerState<FallbackLuringScreen> createState() =>
+      _FallbackLuringScreenState();
 }
 
-class _FallbackLuringScreenState extends State<FallbackLuringScreen>
+class _FallbackLuringScreenState extends ConsumerState<FallbackLuringScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _breath;
 
@@ -125,12 +129,21 @@ class _FallbackLuringScreenState extends State<FallbackLuringScreen>
                 PikirButton(
                   label: 'Oke, saya tunda',
                   variant: PikirButtonVariant.overlayFilled,
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  // Postponing means not going back to the loan app, so this
+                  // one lands on the dashboard rather than handing the app
+                  // underneath straight back.
+                  onPressed: () {
+                    ref.read(interventionControllerProvider.notifier).reset();
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      Routes.beranda,
+                      (_) => false,
+                    );
+                  },
                 ),
                 PikirButton(
                   label: 'Lanjut ke aplikasi',
                   variant: PikirButtonVariant.overlayOutlined,
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: () => leaveIntervention(context, ref),
                 ),
               ],
             ),

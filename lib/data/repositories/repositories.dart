@@ -33,7 +33,15 @@ abstract interface class LedgerRepository {
 
   Future<void> addDebt(DebtEntry entry);
 
+  /// Deletes the record outright, for something entered by mistake.
   Future<void> removeDebt(String id);
+
+  /// Marks a debt paid off, or puts it back to running.
+  ///
+  /// Both directions through one method, because undoing has to exist: a debt
+  /// marked paid off by a mis-tap would otherwise only be recoverable by
+  /// deleting the record, which loses more than the mistake did.
+  Future<void> setDebtSettled(String id, {required bool settled});
 
   Future<List<DecisionRecord>> decisions();
 

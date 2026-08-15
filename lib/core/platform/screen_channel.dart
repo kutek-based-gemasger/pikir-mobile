@@ -49,6 +49,14 @@ abstract final class ScreenChannel {
   static Future<void> openOverlaySettings() =>
       _guard(() => _channel.invokeMethod<void>('openOverlaySettings'));
 
+  /// Sends PIKIR to the background, uncovering the app underneath.
+  ///
+  /// What "Lanjut ke aplikasi" has to do after a real trigger: the user asked
+  /// to go on to the app they were already in, and popping a route would only
+  /// move them further into PIKIR.
+  static Future<void> leaveToPreviousApp() =>
+      _guard(() => _channel.invokeMethod<void>('leaveToPreviousApp'));
+
   /// The apps PIKIR is allowed to see, for the settings screen to list.
   static Future<List<String>> watchedApps() async =>
       await _guard(

@@ -147,19 +147,3 @@ Future<void> requestPermission(PikirPermission permission) async {
 /// The same route serves both entry points, so the page cannot be improved in
 /// Settings and left stale at launch. Only the framing differs.
 const kIzinLaunchPrompt = 'launch-prompt';
-
-/// Whether the launch prompt has already been shown this session.
-///
-/// Shown once per launch, never repeatedly. A screen that reappears every time
-/// the user comes back from somewhere is nagging, and this app argues against
-/// exactly that kind of pressure.
-class LaunchPromptSeen extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  void markSeen() => state = true;
-}
-
-final launchPromptSeenProvider = NotifierProvider<LaunchPromptSeen, bool>(
-  LaunchPromptSeen.new,
-);

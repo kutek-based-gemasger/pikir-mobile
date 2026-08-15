@@ -88,7 +88,7 @@ class OpportunityCostScreen extends ConsumerWidget {
     return InterventionOverlay(
       onDark: false,
       showAttribution: false,
-      onClose: () => Navigator.of(context).maybePop(),
+      onClose: () => leaveIntervention(context, ref),
       // The evidence scrolls; the three choices do not. Three cards of
       // reasoning plus three full-width buttons cannot both fit on a 393x852
       // screen, and CLAUDE.md section 9 will not let the actions be the part

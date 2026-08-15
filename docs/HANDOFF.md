@@ -10,11 +10,11 @@ tanpa konteks percakapan sebelumnya, dan untuk menyusun Bab IV proposal.
 | | |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 115 tes, semua lulus |
+| `flutter test` | 130 tes, semua lulus |
 | `flutter build apk --debug` | Berhasil |
 | Rute terdaftar | 42 |
-| Layar sudah jadi | 25 |
-| Layar masih placeholder | 17 |
+| Layar sudah jadi | 27 |
+| Layar masih placeholder | 15 |
 | Story point Must selesai | **91 dari 122 (74,6%)** |
 
 Diuji pada perangkat nyata: **Realme RMX3630, Android 12 (API 31)**.
@@ -90,7 +90,9 @@ adaptasi backlog di Bab IV.
 
 ## 4. Layar
 
-### Sudah jadi (25)
+### Sudah jadi (27)
+
+**Pembuka:** Splash, Tanpa Akun (layar masuk).
 
 **Dasbor & pengaturan:** Beranda, Ledger Utang (dengan tab Riwayat Keputusan),
 Tambah Utang Manual, Dasbor Dana Darurat, Tanya PIKIR, Pengaturan, Izin
@@ -106,11 +108,11 @@ Produktif, Detail Program Bantuan, Detail Opsi Pembiayaan.
 
 **Perkakas:** Peta Layar (alat pengembangan, bukan bagian produk).
 
-### Masih placeholder (17)
+### Masih placeholder (15)
 
 | Kelompok | Layar |
 |---|---|
-| Onboarding (7) | Splash, Onboarding, Tanpa Akun, Izin Deteksi Layar, Izin Akses Notifikasi, Profil Finansial, Penyiapan Selesai |
+| Onboarding (5) | Onboarding, Izin Deteksi Layar, Izin Akses Notifikasi, Profil Finansial, Penyiapan Selesai |
 | UI Pemindai (3) | Detail Peringatan, Tagihan Terdeteksi, Pengaturan & Riwayat Pemindaian |
 | Dana Darurat (3) | Hitung Dana Darurat, Catat Setoran, Pengingat Menabung |
 | Chat (2) | Sumber Jawaban, Konfirmasi Catat ke Ledger |
@@ -185,6 +187,62 @@ bercabang dua tempat pasti akan menyimpang satu sama lain.
 - **Terbukti di perangkat**: notifikasi uji berisi *"Cair 3 menit tanpa BI
   Checking"* ditahan dan diganti.
 
+### Alur masuk aplikasi
+
+Sebelumnya aplikasi mendarat di **Peta Layar**, yang sebenarnya alat
+pengembangan. Sekarang urutannya seperti aplikasi biasa:
+
+**Splash → Tanpa Akun → (Izin, kalau ada yang mati) → Beranda.**
+
+- **Splash** menampilkan mark dan tagline, lalu maju sendiri setelah 1,6 detik.
+  Tidak ada yang dimuat di sini — tidak ada backend, dan basis data lokal
+  terbuka dalam milidetik, jadi progress bar cuma sandiwara. Timernya membatalkan
+  diri kalau ada layar lain yang sudah naik, supaya intervensi dari
+  AccessibilityService tidak tergusur timer yang berjalan sebelum ia ada.
+- **Tanpa Akun** menempati slot layar masuk. Tidak ada kolom isian, tidak ada
+  kata sandi, tidak ada "lanjut dengan Google" — cuma satu tombol dan tiga janji
+  yang dinyatakan sebagai hal yang **tidak** dilakukan aplikasi.
+- **Beranda** menggantikan keduanya, bukan menumpuk, jadi tombol back di Beranda
+  keluar dari aplikasi dan bukan berjalan mundur lewat pembukaan.
+
+Ada tes yang menjaga layar Tanpa Akun tidak menumbuhkan form login: tidak boleh
+ada `TextField`, `CircleAvatar`, maupun kata "Daftar", "Kata sandi", "Email",
+"Nomor HP", atau "Masuk dengan". Layar itu duduk persis di tempat layar sign-in
+biasanya berada, jadi di situlah aturan §2.2 paling gampang bocor.
+
+### Menutup catatan utang: lunas dan hapus
+
+Tiap kartu di Ledger punya tombol **"Atur catatan ini"** yang membuka sheet
+berisi dua pilihan berukuran sama, tidak ada yang dipilih lebih dulu:
+
+| | Artinya | Efeknya |
+|---|---|---|
+| **Tandai lunas** | Utangnya selesai | Catatan tetap ada, tapi keluar dari total dan dari rasio beban bulanan |
+| **Hapus catatan** | Salah catat | Barisnya hilang permanen |
+
+Bedanya dijaga betul, karena satu `removeDebt` untuk keduanya akan menyamakan
+akhir yang baik dengan koreksi salah ketik — dan menghapus utang yang lunas
+justru membuang bagian ledger yang paling layak dilihat lagi.
+
+- **Lunas bisa dibatalkan.** Tanpa itu, salah pencet cuma bisa diperbaiki dengan
+  menghapus catatannya, yang rugi lebih besar daripada salahnya.
+- **Hapus pakai tahan 5 detik**, bukan satu ketukan, dan tombol "Batal" di
+  sebelahnya berukuran sama persis (§6.4 dan §6.3). Kartu peringatannya menyebut
+  apa yang hilang, bukan bertanya "yakin?".
+- **Tidak ada perayaan** saat lunas — tidak ada konfeti, poin, atau "Selamat!".
+  Melunasi utang itu kerja penggunanya sendiri; aplikasi ikut bertepuk tangan
+  berarti ikut mengambil kredit. Ada tes yang menjaga ini (§6.5).
+- Kartu lunas ditandai warna **plus ikon plus kata "Lunas"**, bukan sekadar
+  diredupkan, dan pindah ke bawah daftar.
+
+Skema basis data naik ke **versi 2** (`settled_at`), dengan `onUpgrade` yang
+menambah kolom lewat `ALTER TABLE`. Bukan drop-and-recreate: penyimpanan lokal
+ini satu-satunya salinan ledger pengguna dan tidak ada server untuk memulihkan.
+
+Terbukti di RMX3630: setelah satu utang ditandai lunas, beban di Beranda turun
+dari **21% ke 18%** dan totalnya dari Rp843.123 ke Rp720.000 — persis sebesar
+cicilan utang yang dilunasi.
+
 ### Pusat izin
 
 Satu halaman, `/pengaturan/izin`, dipakai dua arah: muncul otomatis sekali tiap
@@ -209,6 +267,53 @@ Pengaturan → Izin perlindungan (barisnya menampilkan "N dari 3 izin aktif").
 Terbukti di RMX3630: halaman muncul sendiri saat dibuka, hitungannya berubah
 dari "2 dari 3" ke "1 dari 3" setelah izin overlay dinyalakan, dan kartunya
 berubah jadi "Aktif" begitu kembali dari pengaturan Android.
+
+#### Bug yang diperbaiki: status aksesibilitas selalu "Belum aktif"
+
+Pengecekannya membandingkan teks:
+
+```kotlin
+enabled.contains("$packageName/.ScreenWatcherService")   // salah
+```
+
+Android menulis entrinya dalam bentuk panjang,
+`com.pikir.pikir/com.pikir.pikir.ScreenWatcherService`, sementara manifes dan
+konstanta di kode memakai bentuk pendek `.ScreenWatcherService`. Substring-nya
+tidak pernah cocok, jadi aplikasi melaporkan layanan itu mati **padahal sedang
+berjalan** — pemicunya bekerja, statusnya saja yang bohong.
+
+Sekarang keduanya di-*unflatten* jadi `ComponentName` lalu dibandingkan, yang
+benar untuk kedua bentuk penulisan. Pengecekan akses notifikasi ikut diperbaiki:
+sebelumnya cuma `flat.contains(packageName)`, yang bisa cocok dengan paket lain
+yang namanya kebetulan memuat nama paket kita.
+
+Terbukti di perangkat lewat izin akses notifikasi, yang tersimpan dalam bentuk
+panjang yang sama (`com.pikir.pikir/com.pikir.pikir.NotificationService`) dan
+kini terbaca **Aktif** oleh fungsi yang sama.
+
+#### Bug yang diperbaiki: "Lanjut ke aplikasi" nyangkut di splash
+
+Tombolnya memanggil `maybePop()`, yang menutup satu layar di dalam tumpukan
+PIKIR sendiri. Setelah pemicu asli, layar di bawah intervensi adalah **splash**,
+jadi pengguna yang menekan "Lanjut ke aplikasi" dari Easycash mendarat di layar
+splash PIKIR dan diam di situ.
+
+Dua kesalahan bertemu di sana, dan keduanya diperbaiki:
+
+1. **Tujuannya salah.** "Lanjut ke aplikasi" berarti aplikasi yang tadi dibuka
+   pengguna, bukan layar di dalam PIKIR. Sekarang memanggil `moveTaskToBack`
+   lewat channel, sehingga PIKIR mundur dan Easycash muncul kembali. Task-nya
+   yang dipindah, bukan activity-nya di-finish, supaya engine Flutter tetap
+   hangat dan pemicu berikutnya tidak perlu cold start sebelum bisa memblokir.
+2. **Splash menyerah.** Timernya sengaja tidak menggeser layar kalau ada
+   intervensi di atasnya — tapi dulu ia berhenti mencoba selamanya. Sekarang ia
+   mengecek lagi tiap 300 ms, jadi begitu intervensi ditutup, splash lanjut
+   sendiri.
+
+Bedanya sekarang tercatat di state: `InterventionState.fromRealTrigger`. Dari
+Mode Demo tidak ada aplikasi di bawah, jadi keluar tetap berarti kembali ke
+layar demo. "Oke, saya tunda" di layar luring mendarat di Beranda — menunda
+justru berarti tidak dikembalikan ke aplikasi pinjaman.
 
 #### Izin keempat, khusus Android 13 ke atas
 
@@ -238,7 +343,7 @@ Demo, dan pastikan notifikasi PIKIR benar-benar muncul di panel.
 
 ### Pengujian
 
-115 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
+130 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
 
 - Tiga tombol di layar opportunity cost berlebar sama dan tetap aktif (§6.3).
 - Layar refleksi **tidak memuat satu piksel merah pun** — tes menyapu seluruh
@@ -305,8 +410,11 @@ dicabut dari adb shell), jadi dua di antaranya harus ditekan di layar HP:
 
 **Penting:** `flutter install` yang menulis *"Uninstalling old version"*
 menghapus semua izin ini. Setelah tiap install ulang, aktifkan lagi sebelum
-merekam demo. `flutter build apk --debug` lalu `adb install -r <apk>` memasang
-tanpa mencabut izinnya, jadi lebih aman dipakai saat sedang menguji.
+merekam demo. `adb install -r <apk>` **juga mencabut izin aksesibilitas** di
+ColorOS, walau izin overlay dan akses notifikasi bertahan — jadi setelah tiap
+pemasangan ulang, aksesibilitas harus dinyalakan lagi dengan tangan. Ini sempat
+membuat perbaikan status di atas terlihat gagal padahal layanannya memang baru
+saja dimatikan sistem.
 
 Aplikasi sendiri sudah menunjukkan status ketiganya di **Pengaturan → Izin
 perlindungan**, jadi tidak perlu `dumpsys` untuk sekadar mengecek.

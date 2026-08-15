@@ -40,6 +40,7 @@ class DebtEntry {
     required this.source,
     required this.recordedAt,
     this.category,
+    this.settledAt,
   });
 
   final String id;
@@ -57,6 +58,18 @@ class DebtEntry {
   final DebtSource source;
 
   final DateTime recordedAt;
+
+  /// When the user marked this debt paid off, or null while it is still
+  /// running.
+  ///
+  /// Kept rather than deleted, because a debt that has been paid off is the
+  /// part of the ledger worth looking back on. It stops counting towards the
+  /// monthly burden the moment it is set, which is the whole point: the ratio
+  /// asks whether this month is survivable, and a finished debt costs nothing
+  /// this month.
+  final DateTime? settledAt;
+
+  bool get isSettled => settledAt != null;
 
   /// Null when the user has not chosen one.
   ///
@@ -79,6 +92,26 @@ class DebtEntry {
       source: source,
       recordedAt: recordedAt,
       category: category ?? this.category,
+      settledAt: settledAt,
+    );
+  }
+
+  /// Marks the debt paid off, or puts it back to running.
+  ///
+  /// A separate method rather than a copyWith argument, because clearing a
+  /// field through a null-coalescing copyWith is impossible to express: passing
+  /// null there means "leave it alone", which is exactly the opposite of what
+  /// undoing needs.
+  DebtEntry settled({required DateTime? at}) {
+    return DebtEntry(
+      id: id,
+      purpose: purpose,
+      principal: principal,
+      monthlyInstalment: monthlyInstalment,
+      source: source,
+      recordedAt: recordedAt,
+      category: category,
+      settledAt: at,
     );
   }
 }
@@ -90,6 +123,25 @@ class DebtSummary {
     required this.monthlyInstalmentTotal,
     required this.monthlyIncome,
   });
+
+  /// Totals count only debts still running.
+  ///
+  /// A paid-off debt is kept in the ledger but leaves both figures, so the
+  /// gauge answers the question it actually asks: what this month costs.
+  factory DebtSummary.of(Iterable<DebtEntry> debts, {required int income}) {
+    var principal = 0;
+    var instalment = 0;
+    for (final debt in debts.where((debt) => !debt.isSettled)) {
+      principal += debt.principal;
+      instalment += debt.monthlyInstalment;
+    }
+
+    return DebtSummary(
+      totalActiveDebt: principal,
+      monthlyInstalmentTotal: instalment,
+      monthlyIncome: income,
+    );
+  }
 
   /// The prudence threshold the gauge is marked against.
   ///

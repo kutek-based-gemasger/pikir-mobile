@@ -11,6 +11,7 @@ import '../../../data/models/debt_entry.dart';
 import '../../../data/models/decision_record.dart';
 import '../../../data/queries.dart';
 import '../ledger_state.dart';
+import '../widgets/atur_utang_sheet.dart';
 
 /// The debt ledger, with the decision history behind a second tab.
 ///
@@ -134,9 +135,17 @@ class _DebtList extends ConsumerWidget {
           );
         }
 
+        // Running debts first, paid-off ones after. Both stay on the same
+        // list rather than being hidden behind a filter: what has been
+        // finished is worth seeing next to what has not.
+        final sorted = [
+          ...list.where((debt) => !debt.isSettled),
+          ...list.where((debt) => debt.isSettled),
+        ];
+
         return Column(
           children: [
-            for (final debt in list) ...[
+            for (final debt in sorted) ...[
               _DebtCard(debt: debt),
               const SizedBox(height: 12),
             ],
@@ -162,13 +171,17 @@ class _DebtCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: PikirColors.primaryContainer,
+              color: debt.isSettled
+                  ? PikirColors.background
+                  : PikirColors.primaryContainer,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
-              debtIcon(debt.category),
+              debt.isSettled ? Icons.check_rounded : debtIcon(debt.category),
               size: 22,
-              color: PikirColors.primary,
+              color: debt.isSettled
+                  ? PikirColors.textSecondary
+                  : PikirColors.primary,
             ),
           ),
           const SizedBox(width: 14),
@@ -182,7 +195,20 @@ class _DebtCard extends StatelessWidget {
                     Expanded(
                       child: Text(debt.purpose, style: PikirText.title),
                     ),
-                    if (debt.category != null) ...[
+                    // Colour, icon, and the word together. A paid-off debt is
+                    // marked "Lunas" rather than merely greyed out, because
+                    // faded text alone says nothing to someone who cannot see
+                    // the difference.
+                    if (debt.isSettled) ...[
+                      const SizedBox(width: 8),
+                      const Flexible(
+                        child: StatusChip(
+                          status: PikirStatus.safe,
+                          label: 'Lunas',
+                          quiet: true,
+                        ),
+                      ),
+                    ] else if (debt.category != null) ...[
                       const SizedBox(width: 8),
                       // Flexible, not fixed: a long category label at a large
                       // system text size would otherwise push the row past
@@ -196,23 +222,45 @@ class _DebtCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   formatRupiah(debt.principal),
-                  style: PikirText.number.copyWith(fontSize: 20),
+                  style: PikirText.number.copyWith(
+                    fontSize: 20,
+                    color: debt.isSettled
+                        ? PikirColors.textSecondary
+                        : PikirColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 // "Rp0 per bulan" would read as a debt that costs nothing.
                 // A blank instalment is unknown, not zero, and the difference
                 // matters because the debt ratio is built from this figure.
                 Text(
-                  debt.monthlyInstalment > 0
-                      ? 'Cicilan ${formatRupiah(debt.monthlyInstalment)} '
-                            'per bulan'
-                      : 'Cicilan belum diisi',
+                  switch (debt) {
+                    final debt when debt.isSettled =>
+                      'Tidak lagi dihitung di beban bulananmu',
+                    final debt when debt.monthlyInstalment > 0 =>
+                      'Cicilan ${formatRupiah(debt.monthlyInstalment)} '
+                          'per bulan',
+                    _ => 'Cicilan belum diisi',
+                  },
                   style: PikirText.captionSecondary,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${debt.source.label} ${formatShortDate(debt.recordedAt)}',
+                  debt.isSettled
+                      ? 'Lunas ${formatShortDate(debt.settledAt!)}'
+                      : '${debt.source.label} '
+                            '${formatShortDate(debt.recordedAt)}',
                   style: PikirText.captionSecondary,
+                ),
+                const SizedBox(height: 12),
+                // One door to both actions, spelled out in words rather than
+                // hidden behind a swipe or a three-dot glyph. The people this
+                // is built for should not have to discover a gesture to
+                // correct their own ledger.
+                PikirButton(
+                  label: 'Atur catatan ini',
+                  variant: PikirButtonVariant.outlined,
+                  onPressed: () => showAturUtangSheet(context, debt),
                 ),
               ],
             ),

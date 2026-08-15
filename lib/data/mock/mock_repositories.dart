@@ -88,19 +88,10 @@ class MockLedgerRepository implements LedgerRepository {
     return _summarise();
   }
 
-  DebtSummary _summarise() {
-    var principal = 0;
-    var instalment = 0;
-    for (final debt in _store.debts) {
-      principal += debt.principal;
-      instalment += debt.monthlyInstalment;
-    }
-    return DebtSummary(
-      totalActiveDebt: principal,
-      monthlyInstalmentTotal: instalment,
-      monthlyIncome: _store.profile.monthlyIncome,
-    );
-  }
+  DebtSummary _summarise() => DebtSummary.of(
+    _store.debts,
+    income: _store.profile.monthlyIncome,
+  );
 
   @override
   Future<void> addDebt(DebtEntry entry) async {
@@ -112,6 +103,18 @@ class MockLedgerRepository implements LedgerRepository {
   Future<void> removeDebt(String id) async {
     await Future<void>.delayed(_shortDelay);
     _store.debts = _store.debts.where((debt) => debt.id != id).toList();
+  }
+
+  @override
+  Future<void> setDebtSettled(String id, {required bool settled}) async {
+    await Future<void>.delayed(_shortDelay);
+    _store.debts = [
+      for (final debt in _store.debts)
+        if (debt.id == id)
+          debt.settled(at: settled ? DateTime.now() : null)
+        else
+          debt,
+    ];
   }
 
   @override

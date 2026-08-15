@@ -102,6 +102,7 @@ Map<String, Object?> _debtRow(DebtEntry debt) => {
   'category': debt.category?.name,
   'source': debt.source.name,
   'recorded_at': debt.recordedAt.toIso8601String(),
+  'settled_at': debt.settledAt?.toIso8601String(),
 };
 
 DebtEntry _debtFrom(Map<String, Object?> row) => DebtEntry(
@@ -114,6 +115,10 @@ DebtEntry _debtFrom(Map<String, Object?> row) => DebtEntry(
       _enumOrNull(DebtSource.values, row['source'] as String?) ??
       DebtSource.manual,
   recordedAt: DateTime.parse(row['recorded_at']! as String),
+  settledAt: switch (row['settled_at']) {
+    final String at => DateTime.parse(at),
+    _ => null,
+  },
 );
 
 Map<String, Object?> _decisionRow(DecisionRecord record) => {
@@ -197,18 +202,7 @@ class SqliteLedgerRepository implements LedgerRepository {
     final entries = await debts();
     final profile = await _profile.load();
 
-    var principal = 0;
-    var instalment = 0;
-    for (final debt in entries) {
-      principal += debt.principal;
-      instalment += debt.monthlyInstalment;
-    }
-
-    return DebtSummary(
-      totalActiveDebt: principal,
-      monthlyInstalmentTotal: instalment,
-      monthlyIncome: profile.monthlyIncome,
-    );
+    return DebtSummary.of(entries, income: profile.monthlyIncome);
   }
 
   @override
@@ -225,6 +219,17 @@ class SqliteLedgerRepository implements LedgerRepository {
   Future<void> removeDebt(String id) async {
     final db = await _database.open();
     await db.delete('debts', where: 'id = ?', whereArgs: [id]);
+  }
+
+  @override
+  Future<void> setDebtSettled(String id, {required bool settled}) async {
+    final db = await _database.open();
+    await db.update(
+      'debts',
+      {'settled_at': settled ? DateTime.now().toIso8601String() : null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   @override

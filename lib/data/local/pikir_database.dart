@@ -16,7 +16,7 @@ class PikirDatabase {
     : _keyStore = keyStore ?? const SecureKeyStore();
 
   static const _fileName = 'pikir.db';
-  static const _version = 1;
+  static const _version = 2;
 
   final SecureKeyStore _keyStore;
   Database? _db;
@@ -33,6 +33,7 @@ class PikirDatabase {
       password: password,
       version: _version,
       onCreate: _createSchema,
+      onUpgrade: _upgradeSchema,
       onOpen: (db) => _purgeExpiredChats(db),
     );
 
@@ -45,6 +46,18 @@ class PikirDatabase {
     _db = null;
   }
 
+  /// Migrates an existing database rather than rebuilding it.
+  ///
+  /// The store is the only copy of the user's ledger and there is no server to
+  /// restore it from, so a schema change has to carry the rows forward. Dropping
+  /// and recreating would be simpler and would silently throw away every debt
+  /// they had recorded.
+  Future<void> _upgradeSchema(Database db, int from, int to) async {
+    if (from < 2) {
+      await db.execute('ALTER TABLE debts ADD COLUMN settled_at TEXT');
+    }
+  }
+
   Future<void> _createSchema(Database db, int version) async {
     await db.execute('''
       CREATE TABLE debts (
@@ -54,7 +67,8 @@ class PikirDatabase {
         monthly_instalment INTEGER NOT NULL,
         category TEXT,
         source TEXT NOT NULL,
-        recorded_at TEXT NOT NULL
+        recorded_at TEXT NOT NULL,
+        settled_at TEXT
       )
     ''');
 

@@ -77,14 +77,24 @@ class MainActivity: FlutterActivity() {
                     // settings. The app can ask and check; it can never switch
                     // it on for them.
                     "checkScreenAccess" -> {
-                        val enabled = Settings.Secure.getString(
-                            contentResolver,
-                            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-                        )
                         result.success(
-                            enabled != null &&
-                                enabled.contains("$packageName/.ScreenWatcherService"),
+                            isServiceEnabled(
+                                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                                ComponentName(this, ScreenWatcherService::class.java),
+                            ),
                         )
+                    }
+                    // "Lanjut ke aplikasi" means the app the user was already
+                    // in, not a screen inside PIKIR. Backgrounding the task
+                    // uncovers whatever was underneath, which is the loan app
+                    // or the checkout page the interception covered.
+                    //
+                    // The task is moved rather than the activity finished, so
+                    // the engine stays warm and the next trigger does not have
+                    // to cold-start Flutter before it can block anything.
+                    "leaveToPreviousApp" -> {
+                        moveTaskToBack(true)
+                        result.success(null)
                     }
                     "openScreenAccessSettings" -> {
                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -132,11 +142,12 @@ class MainActivity: FlutterActivity() {
                     // Android's own settings. The app can ask and check; it
                     // can never switch it on for them.
                     "checkNotificationAccess" -> {
-                        val flat = Settings.Secure.getString(
-                            contentResolver,
-                            "enabled_notification_listeners",
+                        result.success(
+                            isServiceEnabled(
+                                "enabled_notification_listeners",
+                                ComponentName(this, NotificationService::class.java),
+                            ),
                         )
-                        result.success(flat != null && flat.contains(packageName))
                     }
                     "openNotificationAccessSettings" -> {
                         startActivity(
@@ -280,6 +291,27 @@ class MainActivity: FlutterActivity() {
                     result.notImplemented()
                 }
             }
+        }
+    }
+
+    /**
+     * Whether [component] appears in one of Android's colon-separated lists of
+     * enabled services.
+     *
+     * Compared as ComponentName rather than as text. Android writes these
+     * entries fully expanded — "com.pikir.pikir/com.pikir.pikir.Xyz" — while
+     * the manifest and any hand-written constant use the short ".Xyz" form, so
+     * a substring check against the short form never matches and the app
+     * reports a service as off while it is running perfectly well. Unflattening
+     * both sides makes the two spellings equal, which is the only comparison
+     * that stays correct whichever form the OS decides to store.
+     */
+    private fun isServiceEnabled(setting: String, component: ComponentName): Boolean {
+        val enabled = Settings.Secure.getString(contentResolver, setting)
+            ?: return false
+
+        return enabled.split(':').any { entry ->
+            ComponentName.unflattenFromString(entry.trim()) == component
         }
     }
 

@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/format/rupiah.dart';
+import '../../core/platform/screen_channel.dart';
 import '../../data/models/debt_entry.dart';
 import '../../data/models/decision_record.dart';
 import '../../data/models/intervention.dart';
@@ -26,6 +28,7 @@ class InterventionState {
     this.reason,
     this.analysis,
     this.isAnalyzing = false,
+    this.fromRealTrigger = false,
   });
 
   final InterventionTrigger? trigger;
@@ -42,6 +45,13 @@ class InterventionState {
 
   final bool isAnalyzing;
 
+  /// Whether the screen watcher started this, rather than Mode Demo.
+  ///
+  /// Decides where leaving goes. After a real trigger the user is standing in
+  /// another app and "Lanjut ke aplikasi" has to give them that app back; in a
+  /// demo there is no app underneath, only the screen they came from.
+  final bool fromRealTrigger;
+
   InterventionState copyWith({
     InterventionTrigger? trigger,
     int? amount,
@@ -49,6 +59,7 @@ class InterventionState {
     BorrowReason? reason,
     InterventionAnalysis? analysis,
     bool? isAnalyzing,
+    bool? fromRealTrigger,
   }) {
     return InterventionState(
       trigger: trigger ?? this.trigger,
@@ -57,6 +68,7 @@ class InterventionState {
       reason: reason ?? this.reason,
       analysis: analysis ?? this.analysis,
       isAnalyzing: isAnalyzing ?? this.isAnalyzing,
+      fromRealTrigger: fromRealTrigger ?? this.fromRealTrigger,
     );
   }
 }
@@ -72,17 +84,19 @@ class InterventionController extends Notifier<InterventionState> {
   /// called: the checkout screen was recognised AND paylater was selected.
   /// Firing on a checkout alone would interrupt every purchase the user makes
   /// and teach them to dismiss PIKIR without reading it.
-  void startCheckout({required int amount}) {
+  void startCheckout({required int amount, bool fromRealTrigger = false}) {
     state = InterventionState(
       trigger: InterventionTrigger.checkoutPaylater,
       amount: amount,
+      fromRealTrigger: fromRealTrigger,
     );
   }
 
   /// A whitelisted loan app was opened.
-  void startLoanApp() {
-    state = const InterventionState(
+  void startLoanApp({bool fromRealTrigger = false}) {
+    state = InterventionState(
       trigger: InterventionTrigger.loanAppOpened,
+      fromRealTrigger: fromRealTrigger,
     );
   }
 
@@ -214,3 +228,28 @@ final interventionControllerProvider =
     NotifierProvider<InterventionController, InterventionState>(
       InterventionController.new,
     );
+
+/// Leaves the intervention without taking any of PIKIR's paths.
+///
+/// Where "leaving" goes depends on how the user got here, and getting this
+/// wrong is what made "Lanjut ke aplikasi" strand people on the splash screen:
+/// popping a route walks back through PIKIR's own stack, which after a real
+/// trigger is not where the user was at all.
+///
+/// After a real trigger PIKIR steps out of the way and gives back the app
+/// underneath. From Mode Demo there is nothing underneath, so it pops back to
+/// the screen the demo was fired from.
+Future<void> leaveIntervention(BuildContext context, WidgetRef ref) async {
+  final fromRealTrigger = ref.read(interventionControllerProvider).fromRealTrigger;
+  final navigator = Navigator.of(context);
+
+  // Cleared either way, so the next trigger starts from nothing rather than
+  // inheriting the amount and the reason from the last one.
+  ref.read(interventionControllerProvider.notifier).reset();
+
+  if (fromRealTrigger) {
+    await ScreenChannel.leaveToPreviousApp();
+  } else {
+    await navigator.maybePop();
+  }
+}
