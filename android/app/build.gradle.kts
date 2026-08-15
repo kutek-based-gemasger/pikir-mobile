@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.pikir.pikir"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -29,7 +29,7 @@ android {
         // foreground service type in particular, are already guarded at
         // runtime by Build.VERSION.SDK_INT checks.
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 37
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
