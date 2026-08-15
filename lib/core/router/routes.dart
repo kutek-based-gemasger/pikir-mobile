@@ -20,6 +20,12 @@ abstract final class Routes {
   // --- Pengaturan -----------------------------------------------------
   static const pengaturan = '/pengaturan';
   static const privasi = '/pengaturan/privasi';
+
+  /// The one place the three permissions are explained and switched on.
+  ///
+  /// Also shown once at launch while any of them is off, so the launch prompt
+  /// and the settings entry cannot drift apart.
+  static const pengaturanIzin = '/pengaturan/izin';
   static const demo = '/pengaturan/demo';
 
   // --- Fitur 1, intervensi preventif ----------------------------------

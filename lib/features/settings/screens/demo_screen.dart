@@ -11,6 +11,7 @@ import '../../../data/providers.dart';
 import '../../../data/queries.dart';
 import '../../intervention/intervention_state.dart';
 import '../../mitigation/mitigation_state.dart';
+import '../izin_state.dart';
 
 /// Mode demo.
 ///
@@ -193,9 +194,7 @@ class _DemoScreenState extends ConsumerState<DemoScreen> {
             ),
           ],
           const SizedBox(height: PikirSpacing.cardGap),
-          const _NotificationAccessCard(),
-          const SizedBox(height: 12),
-          const _ScreenAccessCard(),
+          const _PermissionSummaryCard(),
         ],
       ),
     );
@@ -255,28 +254,30 @@ class _DemoAction extends StatelessWidget {
   }
 }
 
-/// Shows whether the screen watcher is switched on.
+/// Whether the permissions the demo depends on are switched on.
 ///
-/// Without it, Fitur 1 has no real trigger: the interception can only be
-/// reached from the buttons above. Saying so plainly is more useful than
-/// letting somebody record a demo believing the detection is live.
-class _ScreenAccessCard extends StatefulWidget {
-  const _ScreenAccessCard();
+/// Detail lives on the permission page rather than here; this only answers the
+/// question somebody about to record has: is the detection actually live, or
+/// will the buttons above be the only thing firing? Saying so plainly is more
+/// useful than letting a recording be made in the belief that it is live.
+class _PermissionSummaryCard extends ConsumerStatefulWidget {
+  const _PermissionSummaryCard();
 
   @override
-  State<_ScreenAccessCard> createState() => _ScreenAccessCardState();
+  ConsumerState<_PermissionSummaryCard> createState() =>
+      _PermissionSummaryCardState();
 }
 
-class _ScreenAccessCardState extends State<_ScreenAccessCard>
+class _PermissionSummaryCardState
+    extends ConsumerState<_PermissionSummaryCard>
     with WidgetsBindingObserver {
-  bool? _granted;
   int _watchedCount = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _check();
+    _countWatchedApps();
   }
 
   @override
@@ -287,23 +288,26 @@ class _ScreenAccessCardState extends State<_ScreenAccessCard>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _check();
-  }
-
-  Future<void> _check() async {
-    final granted = await ScreenChannel.hasScreenAccess();
-    final watched = await ScreenChannel.watchedApps();
-    if (mounted) {
-      setState(() {
-        _granted = granted;
-        _watchedCount = watched.length;
-      });
+    // Rechecked on return, because the user grants these in Android's own
+    // settings and comes back expecting the app to have noticed.
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(permissionStatusProvider);
     }
   }
 
+  Future<void> _countWatchedApps() async {
+    final watched = await ScreenChannel.watchedApps();
+    if (mounted) setState(() => _watchedCount = watched.length);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final granted = _granted ?? false;
+    final status = ref.watch(permissionStatusProvider).value;
+    // Unknown counts as missing: better to under-promise on a screen whose
+    // whole job is to say whether the real triggers are live.
+    final missing = status?.missing.length ?? PikirPermission.values.length;
+    final total = status?.total ?? PikirPermission.values.length;
+    final allGranted = status?.allGranted ?? false;
 
     return PikirCard(
       outlined: true,
@@ -313,13 +317,15 @@ class _ScreenAccessCardState extends State<_ScreenAccessCard>
           Row(
             children: [
               Expanded(
-                child: Text('Izin deteksi layar', style: PikirText.title),
+                child: Text('Izin perlindungan', style: PikirText.title),
               ),
               const SizedBox(width: 8),
               Flexible(
                 child: StatusChip(
-                  status: granted ? PikirStatus.safe : PikirStatus.caution,
-                  label: granted ? 'Aktif' : 'Belum aktif',
+                  status: allGranted ? PikirStatus.safe : PikirStatus.caution,
+                  label: allGranted
+                      ? 'Semua aktif'
+                      : '$missing dari $total mati',
                   quiet: true,
                 ),
               ),
@@ -327,109 +333,21 @@ class _ScreenAccessCardState extends State<_ScreenAccessCard>
           ),
           const SizedBox(height: 8),
           Text(
-            granted
-                ? 'PIKIR mengenali checkout paylater dan pembukaan aplikasi '
-                      'pinjaman di $_watchedCount aplikasi terdaftar.'
-                : 'Tanpa izin ini, intervensi hanya bisa dipicu dari tombol '
-                      'di atas, bukan dari aplikasi sungguhan.',
+            allGranted
+                ? 'Pemicu asli sudah hidup: checkout paylater dan pembukaan '
+                      'aplikasi pinjaman di $_watchedCount aplikasi terdaftar, '
+                      'serta pemindaian notifikasi yang masuk.'
+                : 'Selama izinnya belum lengkap, alur di atas hanya bisa '
+                      'dipicu dari tombol ini, bukan dari aplikasi sungguhan.',
             style: PikirText.bodySecondary,
           ),
-          if (!granted) ...[
-            const SizedBox(height: PikirSpacing.cardGap),
-            PikirButton(
-              label: 'Buka pengaturan izin',
-              variant: PikirButtonVariant.outlined,
-              onPressed: ScreenChannel.openScreenAccessSettings,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Shows whether the OS has granted notification access, and offers the way to
-/// grant it.
-///
-/// The app cannot turn this on itself, so the honest thing is to say so and
-/// hand the user the settings screen.
-class _NotificationAccessCard extends StatefulWidget {
-  const _NotificationAccessCard();
-
-  @override
-  State<_NotificationAccessCard> createState() =>
-      _NotificationAccessCardState();
-}
-
-class _NotificationAccessCardState extends State<_NotificationAccessCard>
-    with WidgetsBindingObserver {
-  bool? _granted;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _check();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Rechecked on return, because the user grants this in Android's settings
-    // and comes back expecting the app to have noticed.
-    if (state == AppLifecycleState.resumed) _check();
-  }
-
-  Future<void> _check() async {
-    final granted = await ScannerChannel.hasNotificationAccess();
-    if (mounted) setState(() => _granted = granted);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final granted = _granted ?? false;
-
-    return PikirCard(
-      outlined: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Izin akses notifikasi', style: PikirText.title),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: StatusChip(
-                  status: granted ? PikirStatus.safe : PikirStatus.caution,
-                  label: granted ? 'Aktif' : 'Belum aktif',
-                  quiet: true,
-                ),
-              ),
-            ],
+          const SizedBox(height: PikirSpacing.cardGap),
+          PikirButton(
+            label: 'Atur izin',
+            variant: PikirButtonVariant.outlined,
+            onPressed: () =>
+                Navigator.of(context).pushNamed(Routes.pengaturanIzin),
           ),
-          const SizedBox(height: 8),
-          Text(
-            granted
-                ? 'Pemindai bisa membaca notifikasi yang masuk.'
-                : 'Tanpa izin ini, pemindai tidak akan menahan notifikasi '
-                      'apa pun.',
-            style: PikirText.bodySecondary,
-          ),
-          if (!granted) ...[
-            const SizedBox(height: PikirSpacing.cardGap),
-            PikirButton(
-              label: 'Buka pengaturan izin',
-              variant: PikirButtonVariant.outlined,
-              onPressed: ScannerChannel.openNotificationAccessSettings,
-            ),
-          ],
         ],
       ),
     );

@@ -30,6 +30,19 @@ class MainActivity: FlutterActivity() {
      */
     private var pendingTrigger: Map<String, Any?>? = null
 
+    /**
+     * The Flutter call waiting on the POST_NOTIFICATIONS dialog.
+     *
+     * This is the one permission PIKIR needs that Android grants through its
+     * own dialog rather than a settings screen, and that dialog answers
+     * asynchronously in onRequestPermissionsResult, so the result has to be
+     * held rather than returned from the method call.
+     */
+    private var pendingNotificationPermission: MethodChannel.Result? = null
+
+    /** Our own request code, kept clear of the plugin range. */
+    private val POST_NOTIFICATION_REQUEST = 7301
+
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
         captureTrigger(intent)
@@ -77,6 +90,22 @@ class MainActivity: FlutterActivity() {
                         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                         result.success(null)
                     }
+                    // The overlay permission belongs on this channel because
+                    // it is what the interception depends on: without it
+                    // Android drops the background activity start silently, so
+                    // detection works and nothing appears.
+                    "checkOverlayPermission" -> {
+                        result.success(Settings.canDrawOverlays(this))
+                    }
+                    "openOverlaySettings" -> {
+                        startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:$packageName"),
+                            ),
+                        )
+                        result.success(null)
+                    }
                     // Read once. Returning null means nothing is waiting.
                     "consumePendingTrigger" -> {
                         val trigger = pendingTrigger
@@ -112,6 +141,51 @@ class MainActivity: FlutterActivity() {
                     "openNotificationAccessSettings" -> {
                         startActivity(
                             Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS),
+                        )
+                        result.success(null)
+                    }
+                    // Below API 33 the OS grants this at install time, so
+                    // there is nothing to ask for and nothing to show. Saying
+                    // so here keeps the decision in one place instead of
+                    // spreading a version check through the UI.
+                    "postNotificationApplicable" -> {
+                        result.success(Build.VERSION.SDK_INT >= 33)
+                    }
+                    "checkPostNotification" -> {
+                        result.success(hasPostNotificationPermission())
+                    }
+                    // The only permission PIKIR needs that Android answers
+                    // with its own dialog. Without it the replacement
+                    // notification is dropped silently on Android 13 and
+                    // above: the scanner still runs, still flags, and the user
+                    // sees nothing at all.
+                    "requestPostNotification" -> {
+                        when {
+                            Build.VERSION.SDK_INT < 33 || hasPostNotificationPermission() ->
+                                result.success(
+                                    mapOf("granted" to true, "permanentlyDenied" to false),
+                                )
+                            pendingNotificationPermission != null ->
+                                result.error(
+                                    "in_progress",
+                                    "A permission dialog is already open.",
+                                    null,
+                                )
+                            else -> {
+                                pendingNotificationPermission = result
+                                requestPermissions(
+                                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                    POST_NOTIFICATION_REQUEST,
+                                )
+                            }
+                        }
+                    }
+                    // Where PIKIR's notifications are switched back on once the
+                    // dialog has been refused for good and stops appearing.
+                    "openAppNotificationSettings" -> {
+                        startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, packageName),
                         )
                         result.success(null)
                     }
@@ -207,6 +281,42 @@ class MainActivity: FlutterActivity() {
                 }
             }
         }
+    }
+
+    private fun hasPostNotificationPermission(): Boolean {
+        // Granted at install time below API 33, so there is nothing to check.
+        if (Build.VERSION.SDK_INT < 33) return true
+        return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != POST_NOTIFICATION_REQUEST) return
+
+        val result = pendingNotificationPermission ?: return
+        pendingNotificationPermission = null
+
+        val granted = grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+
+        // Android gives no direct "asked too many times" signal. What it does
+        // give is this: after a refusal the system offers a rationale, but once
+        // the dialog is retired for good it stops offering one and returns
+        // denied without showing anything. Denied with no rationale on offer
+        // therefore means asking again would do nothing, and the user has to be
+        // sent to the settings screen instead.
+        val permanentlyDenied = !granted &&
+            Build.VERSION.SDK_INT >= 33 &&
+            !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+
+        result.success(
+            mapOf("granted" to granted, "permanentlyDenied" to permanentlyDenied),
+        )
     }
 
     private fun hasOverlayPermission(): Boolean {

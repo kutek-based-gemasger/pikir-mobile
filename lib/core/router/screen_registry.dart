@@ -38,6 +38,7 @@ import '../../features/onboarding/screens/penyiapan_selesai_screen.dart';
 import '../../features/onboarding/screens/profil_finansial_screen.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/settings/screens/demo_screen.dart';
+import '../../features/settings/screens/izin_screen.dart';
 import '../../features/settings/screens/pengaturan_screen.dart';
 import '../../features/settings/screens/privasi_screen.dart';
 import '../dev/screen_map_page.dart';
@@ -154,6 +155,12 @@ final List<ScreenEntry> kScreenRegistry = [
     title: 'Pengaturan',
     group: ScreenGroup.pengaturan,
     builder: (_) => const PengaturanScreen(),
+  ),
+  ScreenEntry(
+    route: Routes.pengaturanIzin,
+    title: 'Izin Perlindungan',
+    group: ScreenGroup.pengaturan,
+    builder: (_) => const IzinScreen(),
   ),
   ScreenEntry(
     route: Routes.privasi,

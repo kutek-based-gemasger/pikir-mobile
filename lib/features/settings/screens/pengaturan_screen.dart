@@ -7,6 +7,7 @@ import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/tokens.dart';
 import '../../../data/providers.dart';
 import '../../../data/queries.dart';
+import '../izin_state.dart';
 import '../widgets/settings_row.dart';
 
 /// Settings.
@@ -22,6 +23,7 @@ class PengaturanScreen extends ConsumerWidget {
     final profile = ref.watch(incomeProfileProvider);
     final scannerEnabled = ref.watch(scannerEnabledProvider);
     final fund = ref.watch(emergencyFundProvider);
+    final permissions = ref.watch(permissionStatusProvider);
 
     final income = profile.value?.monthlyIncome;
     final tierOne = fund.value?.tiers.firstOrNull?.target;
@@ -61,11 +63,17 @@ class PengaturanScreen extends ConsumerWidget {
           SettingsGroup(
             title: 'Perlindungan',
             rows: [
+              // One row for all three permissions rather than one row each.
+              // They fail together in practice: detection without the overlay
+              // shows nothing, and the overlay without detection never fires.
               SettingsRow(
-                label: 'Deteksi layar',
-                detail: 'Aktif saat kamu buka aplikasi pinjaman atau checkout',
+                label: 'Izin perlindungan',
+                detail: permissions.value == null
+                    ? null
+                    : '${permissions.value!.total - permissions.value!.missing.length} '
+                          'dari ${permissions.value!.total} izin aktif',
                 onTap: () =>
-                    Navigator.of(context).pushNamed(Routes.izinLayar),
+                    Navigator.of(context).pushNamed(Routes.pengaturanIzin),
               ),
               SettingsToggleRow(
                 label: 'Pemindai notifikasi',

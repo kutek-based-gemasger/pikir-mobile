@@ -1,5 +1,19 @@
 import 'package:flutter/services.dart';
 
+/// What Android's notification permission dialog answered.
+class PostNotificationOutcome {
+  const PostNotificationOutcome({
+    required this.granted,
+    required this.permanentlyDenied,
+  });
+
+  final bool granted;
+
+  /// The dialog will not appear again, so the settings screen is the only
+  /// remaining route.
+  final bool permanentlyDenied;
+}
+
 /// The Flutter side of the notification scanner's platform channel.
 ///
 /// One wrapper per service, so no screen talks to a raw MethodChannel or has
@@ -38,6 +52,48 @@ abstract final class ScannerChannel {
 
   static Future<void> openNotificationAccessSettings() =>
       _guard(() => _channel.invokeMethod<void>('openNotificationAccessSettings'));
+
+  /// Whether this Android version gates posting notifications at all.
+  ///
+  /// False below API 33, where the OS grants it at install time. Asked rather
+  /// than assumed, so the permission page can leave out something the user has
+  /// no way to act on.
+  static Future<bool> postNotificationApplicable() async =>
+      await _guard(
+        () => _channel.invokeMethod<bool>('postNotificationApplicable'),
+      ) ??
+      false;
+
+  /// Whether PIKIR may post its own notifications.
+  ///
+  /// Without this the scanner still runs and still flags, but the replacement
+  /// notification never reaches the shade, and nothing reports an error. The
+  /// user sees a scanner that appears to do nothing.
+  static Future<bool> hasPostNotification() async =>
+      await _guard(() => _channel.invokeMethod<bool>('checkPostNotification')) ??
+      false;
+
+  /// Shows Android's own permission dialog and waits for the answer.
+  ///
+  /// The only one of PIKIR's permissions the OS will ask for on its behalf;
+  /// the other three can only be granted on a settings screen.
+  ///
+  /// [PostNotificationOutcome.permanentlyDenied] means the dialog has been
+  /// retired and asking again would show nothing, so the only way left is the
+  /// app's notification settings.
+  static Future<PostNotificationOutcome> requestPostNotification() async {
+    final raw = await _guard(
+      () =>
+          _channel.invokeMapMethod<String, Object?>('requestPostNotification'),
+    );
+    return PostNotificationOutcome(
+      granted: raw?['granted'] as bool? ?? false,
+      permanentlyDenied: raw?['permanentlyDenied'] as bool? ?? false,
+    );
+  }
+
+  static Future<void> openAppNotificationSettings() =>
+      _guard(() => _channel.invokeMethod<void>('openAppNotificationSettings'));
 
   static Future<T?> _guard<T>(Future<T?> Function() call) async {
     try {

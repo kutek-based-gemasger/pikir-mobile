@@ -18,6 +18,10 @@ void main() {
     tester.view.physicalSize = const Size(393 * 3, 852 * 3);
     addTearDown(tester.view.reset);
 
+    // Nothing granted, which is what the channels report away from a device
+    // and the state the demo screen has to be honest about.
+    mockServiceChannels(granted: false);
+
     await tester.pumpWidget(
       mockScope(
         child: MaterialApp(
@@ -61,27 +65,17 @@ void main() {
     }
   });
 
-  testWidgets('says plainly that notification access is not granted', (
+  testWidgets('says plainly how many permissions are still off', (
     tester,
   ) async {
     await open(tester, Routes.demo);
 
-    // Off-device the channel is absent, which the wrapper reports as "not
-    // granted". That is the honest answer: nothing is scanning. The app
-    // cannot switch this on itself and does not pretend it can.
-    await scrollTo(tester, find.text('Izin akses notifikasi'));
-    expect(find.text('Izin akses notifikasi'), findsOneWidget);
-
-    // Two permissions, each reported separately: notification access for the
-    // scanner, screen access for the interception. Both are off here because
-    // the channels are absent away from a device, which is the honest answer.
-    await scrollTo(tester, find.text('Izin deteksi layar'));
-    expect(find.text('Izin deteksi layar'), findsOneWidget);
-    expect(find.text('Belum aktif'), findsNWidgets(2));
-    expect(
-      find.widgetWithText(PikirButton, 'Buka pengaturan izin'),
-      findsNWidgets(2),
-    );
+    // Nothing granted here, and the app cannot switch any of it on itself.
+    // Saying so is the honest answer, and the count says how much is missing
+    // rather than leaving it to be guessed from a colour.
+    await scrollTo(tester, find.text('Izin perlindungan'));
+    expect(find.text('3 dari 3 mati'), findsOneWidget);
+    expect(find.widgetWithText(PikirButton, 'Atur izin'), findsOneWidget);
   });
 
   testWidgets('says the interception has no real trigger without the permission', (
@@ -91,7 +85,7 @@ void main() {
 
     // Somebody must not record a demo believing the detection is live when it
     // is only the buttons above firing the flow.
-    await scrollTo(tester, find.text('Izin deteksi layar'));
+    await scrollTo(tester, find.text('Izin perlindungan'));
     expect(
       find.textContaining('hanya bisa dipicu dari tombol'),
       findsOneWidget,

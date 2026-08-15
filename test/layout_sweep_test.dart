@@ -19,6 +19,18 @@ import 'package:pikir/core/theme/app_theme.dart';
 /// often run their phones at a larger size; app.dart deliberately does not
 /// clamp it, which is only defensible if the layouts survive it.
 void main() {
+  // Without an answer on the service channels, any screen that reads a
+  // permission would sweep past showing only its spinner. Denied rather than
+  // granted, because that state carries the wider chip, an extra explanation
+  // box, and a button, so it is the harder of the two layouts.
+  //
+  // The Android 13 answer, because that is where the permission page is at its
+  // longest: four cards rather than three, each with its own explanation box
+  // and button.
+  setUp(
+    () => mockServiceChannels(granted: false, postNotificationApplicable: true),
+  );
+
   Widget appAt(String route) => mockScope(
     child: MaterialApp(
       key: ValueKey(route),

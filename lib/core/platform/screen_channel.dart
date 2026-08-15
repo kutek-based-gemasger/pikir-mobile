@@ -34,6 +34,21 @@ abstract final class ScreenChannel {
   static Future<void> openScreenAccessSettings() =>
       _guard(() => _channel.invokeMethod<void>('openScreenAccessSettings'));
 
+  /// Whether PIKIR may draw over other apps.
+  ///
+  /// The interception needs this as much as it needs accessibility. Without
+  /// it Android drops the background activity start without an error, so the
+  /// detection fires and nothing appears, which is the hardest failure to
+  /// diagnose from inside the app.
+  static Future<bool> hasOverlayPermission() async =>
+      await _guard(
+        () => _channel.invokeMethod<bool>('checkOverlayPermission'),
+      ) ??
+      false;
+
+  static Future<void> openOverlaySettings() =>
+      _guard(() => _channel.invokeMethod<void>('openOverlaySettings'));
+
   /// The apps PIKIR is allowed to see, for the settings screen to list.
   static Future<List<String>> watchedApps() async =>
       await _guard(

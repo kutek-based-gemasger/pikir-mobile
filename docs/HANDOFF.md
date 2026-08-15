@@ -10,10 +10,10 @@ tanpa konteks percakapan sebelumnya, dan untuk menyusun Bab IV proposal.
 | | |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 103 tes, semua lulus |
+| `flutter test` | 115 tes, semua lulus |
 | `flutter build apk --debug` | Berhasil |
-| Rute terdaftar | 41 |
-| Layar sudah jadi | 24 |
+| Rute terdaftar | 42 |
+| Layar sudah jadi | 25 |
 | Layar masih placeholder | 17 |
 | Story point Must selesai | **91 dari 122 (74,6%)** |
 
@@ -90,11 +90,11 @@ adaptasi backlog di Bab IV.
 
 ## 4. Layar
 
-### Sudah jadi (24)
+### Sudah jadi (25)
 
 **Dasbor & pengaturan:** Beranda, Ledger Utang (dengan tab Riwayat Keputusan),
-Tambah Utang Manual, Dasbor Dana Darurat, Tanya PIKIR, Pengaturan, Privasi dan
-Data Saya, Mode Demo.
+Tambah Utang Manual, Dasbor Dana Darurat, Tanya PIKIR, Pengaturan, Izin
+Perlindungan, Privasi dan Data Saya, Mode Demo.
 
 **Fitur 1, intervensi (6):** Blanket Checkout Paylater, Prompt Intervensi
 Aplikasi Pinjol, Input Barang Konsumtif, Overlay Opportunity Cost (termasuk
@@ -123,6 +123,12 @@ saat demo.
 **Rute yang dihapus:** `/ledger/riwayat` — riwayat keputusan sudah menjadi tab
 di dalam Ledger, jadi satu pintu bukan dua. `/mitigasi/urgensi` masih terdaftar
 tapi kandidat dihapus, karena percabangan sudah ditentukan penuh di langkah 1.
+
+**Perlu diputuskan saat onboarding dikerjakan:** dua placeholder
+`/onboarding/izin-layar` dan `/onboarding/izin-notifikasi` sekarang tumpang
+tindih dengan `/pengaturan/izin` yang sudah jadi. Sebaiknya keduanya memakai
+ulang isi halaman itu atau dihapus, jangan ditulis ulang — teks izin yang
+bercabang dua tempat pasti akan menyimpang satu sama lain.
 
 ---
 
@@ -179,9 +185,60 @@ tapi kandidat dihapus, karena percabangan sudah ditentukan penuh di langkah 1.
 - **Terbukti di perangkat**: notifikasi uji berisi *"Cair 3 menit tanpa BI
   Checking"* ditahan dan diganti.
 
+### Pusat izin
+
+Satu halaman, `/pengaturan/izin`, dipakai dua arah: muncul otomatis sekali tiap
+aplikasi dibuka selama masih ada izin yang mati, dan bisa dibuka kapan saja dari
+Pengaturan → Izin perlindungan (barisnya menampilkan "N dari 3 izin aktif").
+
+- Tiap kartu menyebut tiga hal: apa yang bisa dilakukan izin itu, **di mana
+  batasnya**, dan apa yang tidak jalan selama izin itu mati. Statusnya warna +
+  ikon + kata, tidak pernah warna saja (§6.1).
+- Popup-nya tidak memaksa: "Nanti saja" berukuran penuh, sama besar dengan
+  tombol lain (§6.3), dan hanya muncul sekali per sesi. Kalau aplikasi dibuka
+  karena pemicu intervensi, popup ini dilewati supaya tidak menutupi hal yang
+  justru ditunggu pengguna.
+- Status dibaca ulang tiap kembali ke aplikasi, karena izinnya diberikan di
+  pengaturan Android, bukan di sini.
+- ColorOS mengabaikan `package:` pada intent overlay dan membuka daftar semua
+  aplikasi, jadi kartunya menyebutkan itu di muka: *"Nanti terbuka daftar
+  aplikasi. Cari PIKIR di situ, lalu nyalakan."*
+- Dua kartu izin yang dulu terduplikasi di Mode Demo diganti satu ringkasan yang
+  menunjuk ke halaman ini.
+
+Terbukti di RMX3630: halaman muncul sendiri saat dibuka, hitungannya berubah
+dari "2 dari 3" ke "1 dari 3" setelah izin overlay dinyalakan, dan kartunya
+berubah jadi "Aktif" begitu kembali dari pengaturan Android.
+
+#### Izin keempat, khusus Android 13 ke atas
+
+Tiga izin di atas adalah *special access* — Android **tidak punya dialog** untuk
+ketiganya, jadi satu-satunya jalan memang membuka layar Settings. Tapi ada izin
+keempat yang justru punya dialog bawaan OS, dan sebelumnya **tidak pernah
+diminta**: `POST_NOTIFICATIONS`.
+
+Akibatnya nyata dan senyap: di Android 13 ke atas, pemindai tetap menandai dan
+tetap menahan notifikasi pinjol, tapi **notifikasi pengganti dari PIKIR tidak
+pernah sampai ke panel notifikasi**, tanpa error apa pun. Fitur 3 terlihat mati
+padahal jalan. Di Android 12 izin ini diberikan saat pemasangan, jadi bug ini
+tidak terlihat di HP uji.
+
+Sekarang izin itu jadi kartu keempat di halaman izin, tapi **hanya muncul di
+Android 13 ke atas**; di bawah itu ia dihilangkan dari daftar sekaligus dari
+hitungan, supaya tidak ada baris yang tidak bisa diapa-apakan pengguna. Tombolnya
+berbunyi "Izinkan", bukan "Buka pengaturan", karena yang muncul memang dialog
+sistem. Kalau dialognya sudah ditolak permanen dan berhenti muncul, aplikasi
+beralih membuka pengaturan notifikasi aplikasi.
+
+**Batas pembuktian:** jalur Android 13 ini baru terbukti lewat tes widget, belum
+di perangkat — HP uji yang ada Android 12, dan di situ cabang ini memang tidak
+aktif. Kalau ada anggota tim dengan HP Android 13+, ini yang pertama harus
+dicoba: nyalakan pemindai, jalankan "Simulasi notifikasi pinjol masuk" di Mode
+Demo, dan pastikan notifikasi PIKIR benar-benar muncul di panel.
+
 ### Pengujian
 
-103 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
+115 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
 
 - Tiga tombol di layar opportunity cost berlebar sama dan tetap aktif (§6.3).
 - Layar refleksi **tidak memuat satu piksel merah pun** — tes menyapu seluruh
@@ -191,6 +248,9 @@ tapi kandidat dihapus, karena percabangan sudah ditentukan penuh di langkah 1.
 - Opsi pembiayaan diurutkan cepat-cair, dan tesnya menuntut opsi termurah
   **bukan** yang pertama — kalau seed diubah sampai keduanya sama, tesnya gagal.
 - Sapuan tata letak merender **semua** layar di 360dp dan skala teks 1.3x.
+- Halaman izin tidak memakai kata mendesak apa pun — tesnya menyapu daftar kata
+  seperti "segera" dan "jangan sampai", karena halaman yang meminta sesuatu
+  adalah tempat paling gampang tekanan menyelinap masuk (§6.5).
 
 ---
 
@@ -245,7 +305,11 @@ dicabut dari adb shell), jadi dua di antaranya harus ditekan di layar HP:
 
 **Penting:** `flutter install` yang menulis *"Uninstalling old version"*
 menghapus semua izin ini. Setelah tiap install ulang, aktifkan lagi sebelum
-merekam demo.
+merekam demo. `flutter build apk --debug` lalu `adb install -r <apk>` memasang
+tanpa mencabut izinnya, jadi lebih aman dipakai saat sedang menguji.
+
+Aplikasi sendiri sudah menunjukkan status ketiganya di **Pengaturan → Izin
+perlindungan**, jadi tidak perlu `dumpsys` untuk sekadar mengecek.
 
 ### Menguji pemindai notifikasi
 
@@ -287,6 +351,12 @@ Verifikasi dengan `adb shell pm list packages | grep -i <nama>`, lalu ubah di
 **dua tempat**: `TriggerRules.kt` dan `accessibility_service_config.xml`. Yang
 tidak bisa diverifikasi sebaiknya dihapus, karena entri mati membuat hitungan
 "N aplikasi terdaftar" di Mode Demo melebih-lebihkan cakupan.
+
+**Kalau merekam di HP Android 13 ke atas**, buka dulu Pengaturan → Izin
+perlindungan dan pastikan **keempat** izin aktif, termasuk "Mengirim
+notifikasi". Tanpa yang terakhir, adegan pemindai notifikasi tidak akan
+menampilkan apa pun di panel notifikasi meski pemindainya bekerja. Di Android 12
+izin ini otomatis, jadi masalahnya baru muncul kalau ganti HP.
 
 **Mode Demo** ada di Pengaturan → Mode demo, berisi empat tombol pemicu langsung
 dan reset data ke kondisi seed. Halaman Peta Layar adalah alat pengembangan dan
