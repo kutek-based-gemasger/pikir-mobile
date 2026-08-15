@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/test_overrides.dart';
 import 'package:pikir/core/router/app_router.dart';
 import 'package:pikir/core/router/routes.dart';
 import 'package:pikir/core/theme/app_theme.dart';
@@ -18,7 +19,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await tester.pumpWidget(
-      ProviderScope(
+      mockScope(
         child: MaterialApp(
           key: ValueKey(route),
           theme: PikirTheme.light,
@@ -70,9 +71,29 @@ void main() {
     // cannot switch this on itself and does not pretend it can.
     await scrollTo(tester, find.text('Izin akses notifikasi'));
     expect(find.text('Izin akses notifikasi'), findsOneWidget);
-    expect(find.text('Belum aktif'), findsOneWidget);
+
+    // Two permissions, each reported separately: notification access for the
+    // scanner, screen access for the interception. Both are off here because
+    // the channels are absent away from a device, which is the honest answer.
+    await scrollTo(tester, find.text('Izin deteksi layar'));
+    expect(find.text('Izin deteksi layar'), findsOneWidget);
+    expect(find.text('Belum aktif'), findsNWidgets(2));
     expect(
       find.widgetWithText(PikirButton, 'Buka pengaturan izin'),
+      findsNWidgets(2),
+    );
+  });
+
+  testWidgets('says the interception has no real trigger without the permission', (
+    tester,
+  ) async {
+    await open(tester, Routes.demo);
+
+    // Somebody must not record a demo believing the detection is live when it
+    // is only the buttons above firing the flow.
+    await scrollTo(tester, find.text('Izin deteksi layar'));
+    expect(
+      find.textContaining('hanya bisa dipicu dari tombol'),
       findsOneWidget,
     );
   });

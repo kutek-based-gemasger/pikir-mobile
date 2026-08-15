@@ -170,7 +170,16 @@ class PengaturanScreen extends ConsumerWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    await ref.read(demoRepositoryProvider).resetToSeed();
+    // Deleted, not reseeded. This row says "Hapus semua data di HP ini", and
+    // restoring the demo figures instead would be the app quietly ignoring
+    // what the user asked for.
+    //
+    // File first, then the key, and both rather than either. Emptying the
+    // tables alone would leave ciphertext on disk; destroying the key alone
+    // would leave a file the next launch can never open again.
+    await ref.read(databaseProvider).destroy();
+    await ref.read(secureKeyStoreProvider).destroyKey();
+
     ref.invalidate(debtsProvider);
     ref.invalidate(debtSummaryProvider);
     ref.invalidate(emergencyFundProvider);

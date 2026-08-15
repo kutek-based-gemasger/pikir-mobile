@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/platform/scanner_channel.dart';
+import '../../../core/platform/screen_channel.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/tokens.dart';
@@ -193,6 +194,8 @@ class _DemoScreenState extends ConsumerState<DemoScreen> {
           ],
           const SizedBox(height: PikirSpacing.cardGap),
           const _NotificationAccessCard(),
+          const SizedBox(height: 12),
+          const _ScreenAccessCard(),
         ],
       ),
     );
@@ -246,6 +249,99 @@ class _DemoAction extends StatelessWidget {
             Icons.chevron_right_rounded,
             color: PikirColors.textSecondary,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shows whether the screen watcher is switched on.
+///
+/// Without it, Fitur 1 has no real trigger: the interception can only be
+/// reached from the buttons above. Saying so plainly is more useful than
+/// letting somebody record a demo believing the detection is live.
+class _ScreenAccessCard extends StatefulWidget {
+  const _ScreenAccessCard();
+
+  @override
+  State<_ScreenAccessCard> createState() => _ScreenAccessCardState();
+}
+
+class _ScreenAccessCardState extends State<_ScreenAccessCard>
+    with WidgetsBindingObserver {
+  bool? _granted;
+  int _watchedCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _check();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _check();
+  }
+
+  Future<void> _check() async {
+    final granted = await ScreenChannel.hasScreenAccess();
+    final watched = await ScreenChannel.watchedApps();
+    if (mounted) {
+      setState(() {
+        _granted = granted;
+        _watchedCount = watched.length;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final granted = _granted ?? false;
+
+    return PikirCard(
+      outlined: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Izin deteksi layar', style: PikirText.title),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: StatusChip(
+                  status: granted ? PikirStatus.safe : PikirStatus.caution,
+                  label: granted ? 'Aktif' : 'Belum aktif',
+                  quiet: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            granted
+                ? 'PIKIR mengenali checkout paylater dan pembukaan aplikasi '
+                      'pinjaman di $_watchedCount aplikasi terdaftar.'
+                : 'Tanpa izin ini, intervensi hanya bisa dipicu dari tombol '
+                      'di atas, bukan dari aplikasi sungguhan.',
+            style: PikirText.bodySecondary,
+          ),
+          if (!granted) ...[
+            const SizedBox(height: PikirSpacing.cardGap),
+            PikirButton(
+              label: 'Buka pengaturan izin',
+              variant: PikirButtonVariant.outlined,
+              onPressed: ScreenChannel.openScreenAccessSettings,
+            ),
+          ],
         ],
       ),
     );

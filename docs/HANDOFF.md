@@ -1,0 +1,306 @@
+# PIKIR Mobile — Handoff
+
+Status per 15 Agustus 2026. Berkas ini untuk anggota tim yang membaca repo ini
+tanpa konteks percakapan sebelumnya, dan untuk menyusun Bab IV proposal.
+
+---
+
+## 1. Ringkasan status
+
+| | |
+|---|---|
+| `flutter analyze` | No issues found |
+| `flutter test` | 103 tes, semua lulus |
+| `flutter build apk --debug` | Berhasil |
+| Rute terdaftar | 41 |
+| Layar sudah jadi | 24 |
+| Layar masih placeholder | 17 |
+| Story point Must selesai | **91 dari 122 (74,6%)** |
+
+Diuji pada perangkat nyata: **Realme RMX3630, Android 12 (API 31)**.
+
+---
+
+## 2. Hal paling penting untuk diketahui lebih dulu
+
+**Belum ada satu pun panggilan jaringan ke Backend.** Seluruh respons yang
+seharusnya datang dari server disuplai oleh kontrak Mock API berupa data statis
+terstruktur. Setiap titik integrasi ditandai di kode dengan `TODO(backend):`
+beserta nama endpoint tujuannya:
+
+| Endpoint | Dipakai oleh |
+|---|---|
+| `POST /api/v1/intervene/analyze` | Fitur 1, analisis intervensi |
+| `POST /api/v1/mitigation/routing` | Fitur 2, perutean mitigasi |
+| `POST /api/v1/notification/generate-warning` | Fitur 3, kalimat peringatan |
+| `POST /api/v1/planning/emergency-fund` | Fitur 4, target bertingkat |
+| `POST /api/v1/chat/advisor` | Fitur 5, jawaban bersitasi |
+
+Cari dengan `grep -rn "TODO(backend)" lib/` untuk melihat semua titiknya.
+
+**Yang sudah selesai penuh tanpa backend** (murni on-device, tidak menunggu
+server): deteksi pemicu lewat AccessibilityService, pemindai notifikasi,
+enkripsi basis data lokal, dan ledger utang.
+
+---
+
+## 3. Product Backlog
+
+Status **Done (kontrak Mock API)** berarti alur klien memenuhi acceptance
+criteria dan teruji pada perangkat, dengan respons Backend disuplai data
+statis. Status **Done (penuh)** berarti item itu memang tidak memerlukan server
+dan sudah selesai seutuhnya.
+
+| ID | User Story | MoSCoW | SP | Sprint | Status |
+|---|---|---|---|---|---|
+| PB-01 | Fondasi arsitektur klien, ledger tiga field, kontrak Mock API | Must | 15 | 1 | Done (penuh) |
+| PB-02 | Klasifikasi kebutuhan otonom / pertanyaan interaktif singkat | Must | 8 | 1 | Done (kontrak Mock API) |
+| PB-03 | Opportunity cost, rasio 30%, simulasi menunda | Must | 13 | 2 | Done (kontrak Mock API) |
+| PB-04 | Kebutuhan mendesak diantar tanpa pertanyaan tambahan | Must | 10 | 2 | Done (kontrak Mock API) |
+| PB-05 | Informasi program bantuan resmi bersumber | Must | 8 | 3 | Done (kontrak Mock API) |
+| PB-06 | Kebutuhan bertahan hidup ke bantuan sosial, bukan pinjaman | Must | 8 | 3 | Done (kontrak Mock API) |
+| PB-07 | Uji kelayakan margin & payback, opsi diurutkan waktu cair | Must | 16 | 4 | Done (kontrak Mock API) |
+| PB-08 | Target dana darurat bertingkat + pengingat | Must | 8 | 4 | **In Progress** |
+| PB-09 | Tanya bebas, jawaban bersitasi, tolak topik luar | Must | 23 | 5 | **In Progress** |
+| PB-12 | Deteksi pemicu on-device: AccessibilityService, whitelist aplikasi, deteksi checkout + paylater | Must | 13 | 4 | Done (penuh) |
+| PB-10 | Notifikasi mencurigakan dihapus senyap + peringatan edukatif | Should | 13 | 6 | Done (penuh) |
+| PB-11 | Istilah bahasa sehari-hari + riwayat keputusan | Should | 8 | 6 | Done (penuh) |
+
+**Must: 91 dari 122 SP = 74,6% Done.** Item Should dan Could dikeluarkan dari
+penyebut. Item *In Progress* **tidak dihitung** — Definition of Done bersifat
+biner, tidak ada kredit parsial.
+
+### PB-12 itu item baru
+
+Backlog lama tidak punya item apa pun untuk AccessibilityService, padahal KF-01
+menulis *"pada saat trigger terdeteksi"* seolah pemicunya sudah ada. Tanpa item
+ini, PB-02 dan PB-04 terlihat selesai padahal skenarionya belum bisa terjadi di
+dunia nyata. Ditambahkan sebagai temuan inspeksi, sejalan dengan narasi
+adaptasi backlog di Bab IV.
+
+### Kenapa PB-08 dan PB-09 belum Done
+
+- **PB-08** — dasbor target bertingkat sudah jadi, tapi layar hitung target,
+  catat setoran, dan pengingat menabung masih placeholder.
+- **PB-09** — chat, sitasi, penolakan topik luar, sesi read-only 2 jam, dan
+  penghapusan 24 jam sudah jalan. Yang belum: layar konfirmasi catat ke ledger
+  dari chat, dan layar sumber jawaban.
+
+---
+
+## 4. Layar
+
+### Sudah jadi (24)
+
+**Dasbor & pengaturan:** Beranda, Ledger Utang (dengan tab Riwayat Keputusan),
+Tambah Utang Manual, Dasbor Dana Darurat, Tanya PIKIR, Pengaturan, Privasi dan
+Data Saya, Mode Demo.
+
+**Fitur 1, intervensi (6):** Blanket Checkout Paylater, Prompt Intervensi
+Aplikasi Pinjol, Input Barang Konsumtif, Overlay Opportunity Cost (termasuk
+tahan 5 detik), Pengalihan ke Form Ledger, Fallback Luring.
+
+**Fitur 2, mitigasi (9):** Klasifikasi Kebutuhan, Nominal, Untung Bersih, Uji
+Kelayakan, Hasil Jalur Konsumtif, Hasil Jalur Kebutuhan Mendesak, Hasil Jalur
+Produktif, Detail Program Bantuan, Detail Opsi Pembiayaan.
+
+**Perkakas:** Peta Layar (alat pengembangan, bukan bagian produk).
+
+### Masih placeholder (17)
+
+| Kelompok | Layar |
+|---|---|
+| Onboarding (7) | Splash, Onboarding, Tanpa Akun, Izin Deteksi Layar, Izin Akses Notifikasi, Profil Finansial, Penyiapan Selesai |
+| UI Pemindai (3) | Detail Peringatan, Tagihan Terdeteksi, Pengaturan & Riwayat Pemindaian |
+| Dana Darurat (3) | Hitung Dana Darurat, Catat Setoran, Pengingat Menabung |
+| Chat (2) | Sumber Jawaban, Konfirmasi Catat ke Ledger |
+| Lain (2) | Detail Rasio Utang, Klasifikasi Urgensi |
+
+Placeholder menampilkan label **"Belum dibuat"** beserta acuannya di SCREENS.md,
+supaya layar yang belum jadi tidak pernah tersamar sebagai layar yang sudah jadi
+saat demo.
+
+**Rute yang dihapus:** `/ledger/riwayat` — riwayat keputusan sudah menjadi tab
+di dalam Ledger, jadi satu pintu bukan dua. `/mitigasi/urgensi` masih terdaftar
+tapi kandidat dihapus, karena percabangan sudah ditentukan penuh di langkah 1.
+
+---
+
+## 5. Yang sudah dikerjakan
+
+### Fondasi
+
+- Token desain lengkap dari DESIGN.md di `lib/core/theme/`. Tidak ada satu pun
+  warna literal atau ukuran huruf di bawah 13sp di seluruh `lib/`.
+- Font Plus Jakarta Sans di-bundel sebagai aset (bukan diunduh saat runtime),
+  supaya tipografi tetap benar tanpa koneksi.
+- 11 widget bersama di `lib/core/widgets/`, termasuk `PikirButton` yang semua
+  variannya bermetrik identik dan `HoldToConfirmButton` dengan tahan 5 detik.
+- Router berbasis registri tunggal: satu daftar jadi sumber rute sekaligus peta
+  layar, jadi keduanya tidak bisa berbeda.
+
+### Data
+
+- Model, interface repository, implementasi mock, dan data seed terkunci ke
+  angka CLAUDE.md §8 (3 utang Rp3.150.000, rasio 18%, dana darurat Rp450.000).
+- **Percabangan tiga jalur ditegakkan di tingkat model**: `MitigationResult`
+  menolak dibangun kalau opsi pembiayaan menempel di hasil konsumtif atau
+  kebutuhan mendesak. Aturan §6.7 jadi mustahil dilanggar tanpa mengubah model.
+
+### Penyimpanan terenkripsi (KNF-02)
+
+- SQLite lewat **SQLCipher, AES-256**, di `lib/data/local/pikir_database.dart`.
+- Kunci 256 bit dari sumber acak kriptografis, disimpan di **Android Keystore**
+  lewat `flutter_secure_storage` — bukan di berkas aplikasi.
+- Terbukti di perangkat: 16 byte pertama `pikir.db` adalah byte acak, bukan
+  `SQLite format 3` yang selalu mengawali SQLite polos.
+- Penghapusan chat 24 jam ditegakkan oleh penyimpanannya, berjalan tiap kali
+  basis data dibuka.
+
+### Fitur 1 — intervensi preventif
+
+- `ScreenWatcherService.kt`, AccessibilityService dari nol tanpa pustaka luar.
+- **Aturan dua syarat**: checkout **DAN** paylater, tidak boleh salah satu.
+  Aplikasi pinjaman diblokir begitu dibuka.
+- Cakupan aksesnya dibatasi oleh Android sendiri lewat `android:packageNames`
+  di `accessibility_service_config.xml` — di luar daftar itu, sistem operasi
+  tidak pernah mengirim event apa pun.
+- **Terbukti di perangkat**: membuka Easycash memunculkan layar intervensi
+  dalam 1 detik.
+
+### Fitur 3 — pemindai notifikasi
+
+- `NotificationService.kt` dari nol. Notifikasi aman dan tagihan dibiarkan utuh
+  tanpa tanda PIKIR; hanya yang predatoris dibungkam lalu diganti.
+- Notifikasi pengganti **wajib** membawa aksi "Tampilkan pesan aslinya". Teks
+  asli disimpan sebelum dibungkam lalu diposting ulang apa adanya.
+- Klasifikasi deterministik (kata kunci + regex, dengan alpha-squashing untuk
+  menangkal penyamaran huruf). Titik TFLite ditandai `TODO(ml)`.
+- **Terbukti di perangkat**: notifikasi uji berisi *"Cair 3 menit tanpa BI
+  Checking"* ditahan dan diganti.
+
+### Pengujian
+
+103 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
+
+- Tiga tombol di layar opportunity cost berlebar sama dan tetap aktif (§6.3).
+- Layar refleksi **tidak memuat satu piksel merah pun** — tes menyapu seluruh
+  widget tree (DESIGN.md).
+- Jalur konsumtif dan kebutuhan mendesak tidak memuat nama produk pinjaman
+  apa pun (§6.7).
+- Opsi pembiayaan diurutkan cepat-cair, dan tesnya menuntut opsi termurah
+  **bukan** yang pertama — kalau seed diubah sampai keduanya sama, tesnya gagal.
+- Sapuan tata letak merender **semua** layar di 360dp dan skala teks 1.3x.
+
+---
+
+## 6. Ketidaksesuaian dengan proposal yang harus diperbaiki
+
+Tiga hal ini **tidak bisa diperbaiki dengan mengubah kode saja**.
+
+**1. TFLite belum ada.** Proposal menyebutnya di §5.1, §5.4, §6.1, KNF-01,
+Tabel 6.1, dan metrik §7.3. Kode memakai pencocokan kata kunci dan regex
+deterministik. Perlu dilunakkan jadi rencana sprint berikutnya, atau TFLite-nya
+dibangun.
+
+**2. Klaim "isi notifikasi tidak disimpan" mustahil dipenuhi.** Tabel 6.1
+menulis *"tidak disimpan ke basis data lokal"* dan KNF-01 menulis
+*"dihancurkan dari RAM"*. Itu tidak bisa digabung dengan aksi "Tampilkan pesan
+aslinya" **dan** layar "Riwayat pemindaian" yang dirancang sendiri — ketiganya
+saling meniadakan. Kalimatnya perlu diganti jadi kira-kira *"disimpan terbatas
+di perangkat dan terhapus otomatis dalam 24 jam"*, yang sekarang memang sudah
+ditegakkan kodenya.
+
+**3. Tombol "Lanjut Meminjam" tidak dipudarkan.** §5.2 proposal menulis tombol
+itu *"didesain pudar"*. Itu bertentangan dengan KNF-06 proposal sendiri, yang
+melarang dark pattern jenis *obstruction* (Mathur dkk., 2019) — dan Bab VIII
+menjadikannya tabel inversi dark pattern. Implementasinya memakai jalan tengah:
+ketiga tombol berukuran sama dan sama kontras, friksinya ada pada tahan 5 detik.
+Kalimat §5.2 perlu disesuaikan.
+
+---
+
+## 7. Cara menjalankan
+
+```bash
+flutter pub get
+flutter run          # perlu Android SDK + JDK 17
+flutter test         # 103 tes
+flutter analyze
+```
+
+`minSdk` 30 (Android 11), sesuai CLAUDE.md §3.
+
+### Izin yang harus diaktifkan manual
+
+Untuk menguji fitur native, tiga izin harus aktif. **Realme/ColorOS memblokir
+pemberian izin lewat adb** (`WRITE_SECURE_SETTINGS` dan `MANAGE_APP_OPS_MODES`
+dicabut dari adb shell), jadi dua di antaranya harus ditekan di layar HP:
+
+| Izin | Cara |
+|---|---|
+| Akses notifikasi | `adb shell cmd notification allow_listener com.pikir.pikir/com.pikir.pikir.NotificationService` |
+| Aksesibilitas | Manual: Pengaturan → Aksesibilitas → PIKIR → aktifkan |
+| Tampilkan di atas aplikasi lain | Manual: Pengaturan → Aplikasi → PIKIR |
+
+**Penting:** `flutter install` yang menulis *"Uninstalling old version"*
+menghapus semua izin ini. Setelah tiap install ulang, aktifkan lagi sebelum
+merekam demo.
+
+### Menguji pemindai notifikasi
+
+```bash
+adb shell "cmd notification post -S bigtext -t 'Selamat! Limit kamu naik Rp5.000.000' pikirtest 'Cair 3 menit tanpa BI Checking. Klik sekarang!'"
+```
+
+Notifikasinya harus hilang dan diganti notifikasi PIKIR. Kutip ganda di luar
+wajib, kalau tidak shell di HP memecah argumennya dan kata kuncinya tidak
+pernah sampai.
+
+### Memantau
+
+```bash
+adb logcat -s PikirScreen PikirScanner
+```
+
+### Membuktikan enkripsi
+
+```bash
+adb shell run-as com.pikir.pikir od -A x -t x1 -N 16 databases/pikir.db
+```
+
+Hasilnya harus byte acak. SQLite polos selalu diawali `53 51 4c 69 74 65` =
+`SQLite`.
+
+---
+
+## 8. Yang perlu diperhatikan sebelum merekam demo
+
+**Whitelist aplikasi belum terverifikasi seluruhnya.** Nama paket yang salah
+**gagal senyap** — pemicu tidak pernah menyala, tanpa error apa pun. Baru 3
+dari 11 terverifikasi di perangkat nyata:
+
+- **Terverifikasi:** Tokopedia, TikTok, Easycash (`com.fintopia.idnEasycash.google`)
+- **Belum:** Shopee, Lazada, Bukalapak, Kredivo, Akulaku, AdaKami, Julo, Indodana
+
+Verifikasi dengan `adb shell pm list packages | grep -i <nama>`, lalu ubah di
+**dua tempat**: `TriggerRules.kt` dan `accessibility_service_config.xml`. Yang
+tidak bisa diverifikasi sebaiknya dihapus, karena entri mati membuat hitungan
+"N aplikasi terdaftar" di Mode Demo melebih-lebihkan cakupan.
+
+**Mode Demo** ada di Pengaturan → Mode demo, berisi empat tombol pemicu langsung
+dan reset data ke kondisi seed. Halaman Peta Layar adalah alat pengembangan dan
+tidak boleh ikut terekam.
+
+---
+
+## 9. Sisa pekerjaan, berdasarkan dampak ke penilaian
+
+1. **Onboarding (7 layar)** — pembuka video, paling terlihat juri.
+2. **UI pemindai notifikasi (3 layar)** — fitur 3 sudah bekerja di sisi sistem
+   tapi belum punya antarmuka sama sekali.
+3. **Layar pendukung dana darurat dan chat (5 layar)** — ini yang menahan PB-08
+   dan PB-09 di status In Progress.
+4. **Detail Rasio Utang** — dicapai dari "Lihat rincian" di Beranda.
+5. Verifikasi 8 nama paket yang tersisa.
+6. Penyesuaian tiga kalimat proposal di bagian 6 di atas.

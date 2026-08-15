@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The scope of PIKIR's screen access, enforced by Android rather than by our
+    own code.
+
+    android:packageNames is the important line. Outside these packages the
+    service is never delivered an event at all, so there is nothing for it to
+    read even accidentally. This is what the proposal's "targeted whitelisting"
+    claim rests on, and it must be kept in step with TriggerRules.kt.
+
+    canRetrieveWindowContent is required to tell a paylater checkout from an
+    ordinary one, which needs the text of the screen rather than just the fact
+    that a screen appeared.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="300"
+    android:packageNames="com.tokopedia.tkpd,com.ss.android.ugc.trill,com.shopee.id,com.lazada.android,com.bukalapak.android,com.fintopia.idnEasycash.google,com.kredivo.mobile,com.akulaku.android,com.adakami.id,com.julo.app,com.indodana.customer"
+    android:settingsActivity="com.pikir.pikir.MainActivity" />

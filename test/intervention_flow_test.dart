@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/test_overrides.dart';
 import 'package:pikir/core/router/app_router.dart';
 import 'package:pikir/core/router/routes.dart';
 import 'package:pikir/core/theme/app_theme.dart';
@@ -33,7 +34,7 @@ void main() {
   Future<void> open(WidgetTester tester, String route) async {
     useTargetDevice(tester);
     await tester.pumpWidget(
-      ProviderScope(
+      mockScope(
         child: MaterialApp(
           key: ValueKey(route),
           theme: PikirTheme.light,

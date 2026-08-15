@@ -1,86 +1,104 @@
 /// Where implementations are chosen.
 ///
-/// CLAUDE.md section 4: mock repositories are injected at the top so a real
-/// implementation can replace them later without touching the UI. This file is
-/// that top. Screens depend on the interfaces in repositories.dart and never
-/// name a Mock class, so swapping one is an edit here and nowhere else.
+/// CLAUDE.md section 4: repositories are injected at the top so an
+/// implementation can be replaced without touching the UI. This file is that
+/// top, and it is now the only place that knows the app runs on an encrypted
+/// database rather than on mock data.
+///
+/// The mocks have not gone anywhere. Widget tests override these providers
+/// with them, because sqflite needs a platform channel a unit test does not
+/// have, and because a test that seeds its own data is easier to read than one
+/// that sets up a database first.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'local/method_channel_scanner_repository.dart';
+import 'local/pikir_database.dart';
+import 'local/secure_key_store.dart';
 import 'local/shared_preferences_scanner_repository.dart';
+import 'local/sqlite_repositories.dart';
 import 'mock/mock_repositories.dart';
 import 'repositories/repositories.dart';
 
-/// The shared in-memory state behind every mock.
-///
-/// Single instance so a debt recorded from an intervention shows up on the
-/// home screen, and so Mode Demo's reset clears everything at once.
-final mockStoreProvider = Provider<MockStore>((ref) => MockStore());
+/// The encrypted database, opened once and shared.
+final databaseProvider = Provider<PikirDatabase>((ref) {
+  final database = PikirDatabase();
+  ref.onDispose(database.close);
+  return database;
+});
+
+final secureKeyStoreProvider = Provider<SecureKeyStore>(
+  (ref) => const SecureKeyStore(),
+);
 
 final profileRepositoryProvider = Provider<ProfileRepository>(
-  (ref) => MockProfileRepository(ref.watch(mockStoreProvider)),
+  (ref) => SqliteProfileRepository(ref.watch(databaseProvider)),
 );
 
 final ledgerRepositoryProvider = Provider<LedgerRepository>(
-  (ref) => MockLedgerRepository(ref.watch(mockStoreProvider)),
+  (ref) => SqliteLedgerRepository(
+    ref.watch(databaseProvider),
+    ref.watch(profileRepositoryProvider),
+  ),
 );
 
 final emergencyFundRepositoryProvider = Provider<EmergencyFundRepository>(
-  (ref) => MockEmergencyFundRepository(ref.watch(mockStoreProvider)),
+  (ref) => SqliteEmergencyFundRepository(ref.watch(databaseProvider)),
+);
+
+final chatRepositoryProvider = Provider<ChatRepository>(
+  (ref) => SqliteChatRepository(ref.watch(databaseProvider)),
+);
+
+final demoRepositoryProvider = Provider<DemoRepository>(
+  (ref) => SqliteDemoRepository(ref.watch(databaseProvider)),
+);
+
+/// Routing and intervention analysis have nothing to persist.
+///
+/// They compute a result from what the user just answered, so there is no
+/// mock to replace: this is the real implementation until a backend exists,
+/// and its call sites carry the endpoint names.
+final mitigationRepositoryProvider = Provider<MitigationRepository>(
+  (ref) => MockMitigationRepository(),
 );
 
 final interventionRepositoryProvider = Provider<InterventionRepository>(
   (ref) => MockInterventionRepository(ref.watch(mockStoreProvider)),
 );
 
-final mitigationRepositoryProvider = Provider<MitigationRepository>(
-  (ref) => MockMitigationRepository(),
-);
+/// Backing state for the two computed repositories above.
+final mockStoreProvider = Provider<MockStore>((ref) => MockStore());
 
-final chatRepositoryProvider = Provider<ChatRepository>(
-  (ref) => MockChatRepository(ref.watch(mockStoreProvider)),
-);
-
-final demoRepositoryProvider = Provider<DemoRepository>(
-  (ref) => MockDemoRepository(ref.watch(mockStoreProvider)),
-);
-
-/// The notification scanner, currently served from seeded mock data.
+/// The notification scanner, served from seeded mock data.
 ///
-/// [SharedPreferencesScannerRepository] already implements this same interface
-/// against real on-device storage. Phase 5 switches the scanner screens to
-/// live data by changing this one line to:
+/// [MethodChannelScannerRepository] implements the same interface against the
+/// live Android service. Pointing the scanner screens at real data is a change
+/// to this one line:
 ///
 /// ```dart
 /// final notificationScannerRepositoryProvider =
 ///     Provider<NotificationScannerRepository>(
-///   (ref) => SharedPreferencesScannerRepository(),
+///   (ref) => const MethodChannelScannerRepository(),
 /// );
 /// ```
 ///
-/// Read the notes on that class before flipping it. It stores notification
-/// excerpts unencrypted, and its detectedBills is empty until due-date
-/// extraction is written, so the Tagihan screen goes blank on the real source.
+/// Read the notes on that class first. Its detectedBills is empty until
+/// due-date extraction is written, so the Tagihan screen goes blank on the
+/// real source.
 final notificationScannerRepositoryProvider =
     Provider<NotificationScannerRepository>(
       (ref) => MockNotificationScannerRepository(ref.watch(mockStoreProvider)),
     );
 
-/// The Dart-side on-device store, for logs written by Flutter.
+/// The Dart-side key-value scan log, for logs written by Flutter.
 final sharedPreferencesScannerRepositoryProvider =
     Provider<SharedPreferencesScannerRepository>(
       (ref) => SharedPreferencesScannerRepository(),
     );
 
 /// The live scan log written by the Android NotificationListenerService.
-///
-/// Reading this on a device with the listener permission granted returns real
-/// notifications PIKIR has classified. It returns an empty list anywhere the
-/// channel is absent, which includes every test and every non-Android host, so
-/// pointing the screens at it is safe but would leave them blank in the demo
-/// until the permission is granted on the recording device.
 final platformScannerRepositoryProvider =
     Provider<MethodChannelScannerRepository>(
       (ref) => const MethodChannelScannerRepository(),

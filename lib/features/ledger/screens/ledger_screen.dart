@@ -199,8 +199,14 @@ class _DebtCard extends StatelessWidget {
                   style: PikirText.number.copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 4),
+                // "Rp0 per bulan" would read as a debt that costs nothing.
+                // A blank instalment is unknown, not zero, and the difference
+                // matters because the debt ratio is built from this figure.
                 Text(
-                  'Cicilan ${formatRupiah(debt.monthlyInstalment)} per bulan',
+                  debt.monthlyInstalment > 0
+                      ? 'Cicilan ${formatRupiah(debt.monthlyInstalment)} '
+                            'per bulan'
+                      : 'Cicilan belum diisi',
                   style: PikirText.captionSecondary,
                 ),
                 const SizedBox(height: 8),

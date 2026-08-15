@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/test_overrides.dart';
 import 'package:pikir/core/router/app_router.dart';
 import 'package:pikir/core/router/routes.dart';
 import 'package:pikir/core/theme/app_theme.dart';
@@ -37,7 +38,7 @@ void main() {
   Future<void> open(WidgetTester tester, String route) async {
     useTargetDevice(tester);
     await tester.pumpWidget(
-      ProviderScope(
+      mockScope(
         child: MaterialApp(
           key: ValueKey(route),
           theme: PikirTheme.light,
@@ -270,9 +271,21 @@ void main() {
 
       expect(find.text('Tersimpan di HP-mu'), findsOneWidget);
 
+      // The scan log is listed as kept, not as never stored. PIKIR does keep a
+      // flagged excerpt and the original of a message it dismissed, because
+      // the replacement has to be able to hand it back. Claiming otherwise
+      // here would be the app lying to the user on its own privacy page.
+      expect(
+        find.textContaining('Cuplikan notifikasi yang ditandai'),
+        findsOneWidget,
+      );
+
       await scrollTo(tester, find.text('Tidak pernah kami simpan'));
-      expect(find.text('Isi notifikasi'), findsOneWidget);
       expect(find.text('Nomor rekening'), findsOneWidget);
+      expect(
+        find.textContaining('Isi notifikasi yang aman'),
+        findsOneWidget,
+      );
 
       await scrollTo(
         tester,

@@ -87,10 +87,16 @@ class _KeptCard extends StatelessWidget {
         children: [
           Text('Tersimpan di HP-mu', style: PikirText.title),
           const SizedBox(height: 12),
+          // The scan log belongs on this side of the page, not the other.
+          // PIKIR keeps a short excerpt of a flagged notification, and the
+          // original text of one it dismissed, because the replacement has to
+          // be able to show the user the message it took away. Listing it as
+          // never stored would be a promise the code does not keep.
           for (final item in const [
             'Catatan utang',
             'Target dana darurat',
             'Profil penghasilan',
+            'Cuplikan notifikasi yang ditandai, terhapus otomatis 24 jam',
           ]) ...[
             _Line(text: item, kept: true),
             const SizedBox(height: 10),
@@ -114,8 +120,8 @@ class _NeverKeptCard extends StatelessWidget {
           const SizedBox(height: 12),
           for (final item in const [
             'Nama dan nomor HP',
-            'Isi notifikasi',
-            'Riwayat SMS dan chat',
+            'Isi notifikasi yang aman, tidak pernah dicatat',
+            'Riwayat SMS dan chat lama',
             'Nomor rekening',
           ]) ...[
             _Line(text: item, kept: false),

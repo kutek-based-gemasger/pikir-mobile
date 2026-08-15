@@ -64,7 +64,9 @@ abstract final class Routes {
   // --- Ledger ---------------------------------------------------------
   static const ledger = '/ledger';
   static const ledgerTambah = '/ledger/tambah';
-  static const ledgerRiwayat = '/ledger/riwayat';
+
+  // The decision history is a tab inside the ledger, not a screen of its
+  // own: one door to it, not two, and the tab already works.
 
   // --- Perkakas pengembangan ------------------------------------------
   static const petaLayar = '/peta-layar';

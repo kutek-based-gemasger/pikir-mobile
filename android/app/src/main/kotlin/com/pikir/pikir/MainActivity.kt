@@ -17,8 +17,78 @@ class MainActivity: FlutterActivity() {
     /** The notification scanner's own channel, one per service. */
     private val SCANNER_CHANNEL = "com.pikir.pikir/scanner"
 
+    /** The screen watcher's own channel, one per service. */
+    private val SCREEN_CHANNEL = "com.pikir.pikir/screen"
+
+    /**
+     * The trigger the screen watcher arrived with, if any.
+     *
+     * Held until Flutter asks for it and cleared on read, so a trigger is
+     * acted on exactly once. onNewIntent updates it when the activity is
+     * already running, which is the usual case: PIKIR stays warm in the
+     * background.
+     */
+    private var pendingTrigger: Map<String, Any?>? = null
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        captureTrigger(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        captureTrigger(intent)
+    }
+
+    private fun captureTrigger(intent: Intent?) {
+        val trigger = intent?.getStringExtra(EXTRA_TRIGGER) ?: return
+        pendingTrigger = mapOf(
+            "trigger" to trigger,
+            "sourceApp" to intent.getStringExtra(EXTRA_SOURCE_APP),
+            "amount" to
+                if (intent.hasExtra(EXTRA_AMOUNT)) intent.getIntExtra(EXTRA_AMOUNT, 0)
+                else null,
+        )
+        // Cleared from the intent too, so a configuration change does not
+        // replay the same interception.
+        intent.removeExtra(EXTRA_TRIGGER)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SCREEN_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    // Only the user can grant this, from Android's own
+                    // settings. The app can ask and check; it can never switch
+                    // it on for them.
+                    "checkScreenAccess" -> {
+                        val enabled = Settings.Secure.getString(
+                            contentResolver,
+                            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                        )
+                        result.success(
+                            enabled != null &&
+                                enabled.contains("$packageName/.ScreenWatcherService"),
+                        )
+                    }
+                    "openScreenAccessSettings" -> {
+                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        result.success(null)
+                    }
+                    // Read once. Returning null means nothing is waiting.
+                    "consumePendingTrigger" -> {
+                        val trigger = pendingTrigger
+                        pendingTrigger = null
+                        result.success(trigger)
+                    }
+                    "watchedApps" -> {
+                        result.success(TriggerRules.watchedPackages.toList())
+                    }
+                    else -> result.notImplemented()
+                }
+            }
 
         // The scan log lives in the service's own store, because the service
         // has to keep working with the Flutter engine shut down. Flutter reads

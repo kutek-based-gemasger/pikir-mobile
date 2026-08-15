@@ -42,6 +42,14 @@ dependencies:
   # encrypted; see the note in data/local/.
   shared_preferences: ^2.5.5
 
+  # The encrypted local database. SQLite with SQLCipher, AES-256 at rest, for
+  # the ledger, the chat history, and the emergency fund profile.
+  sqflite_sqlcipher: ^3.4.1
+
+  # Holds the database key in the Android Keystore, so the key is never in the
+  # app's own files alongside the data it unlocks.
+  flutter_secure_storage: ^11.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Shown by Android on its own permission screen, so it is the one piece
+        of PIKIR's copy the user reads before deciding. It states the limit of
+        the access, not just the request.
+    -->
+    <string name="accessibility_service_description">PIKIR mengenali dua hal saja: saat kamu membuka aplikasi pinjaman, dan saat halaman checkout memakai paylater. Yang dibaca hanya jenis halamannya, bukan isi pesan atau kontakmu. Di luar aplikasi yang terdaftar, PIKIR tidak membaca layarmu sama sekali.</string>
+</resources>

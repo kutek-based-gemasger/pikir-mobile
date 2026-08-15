@@ -3,6 +3,8 @@ package com.pikir.pikir
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
  * The scan log, on the device.
@@ -32,14 +34,76 @@ class ScanLogStore(context: Context) {
         private const val KEY_ENABLED = "enabled"
         private const val KEY_ORIGINALS = "originals"
         private const val MAX_ENTRIES = 200
+
+        /** Matches the chat history window: nothing lingers past a day. */
+        private const val RETENTION_HOURS = 24
     }
 
     var isEnabled: Boolean
         get() = prefs.getBoolean(KEY_ENABLED, true)
         set(value) = prefs.edit().putBoolean(KEY_ENABLED, value).apply()
 
-    /** Newest first, as a JSON array string ready to hand to Flutter. */
-    fun logsJson(): String = prefs.getString(KEY_LOGS, "[]") ?: "[]"
+    /**
+     * Newest first, as a JSON array string ready to hand to Flutter.
+     *
+     * Expired rows are dropped on read, so the log cannot outlive its window
+     * just because nothing happened to write to it.
+     */
+    fun logsJson(): String {
+        val pruned = pruneExpired(JSONArray(prefs.getString(KEY_LOGS, "[]") ?: "[]"))
+        return pruned.toString()
+    }
+
+    /**
+     * Drops entries older than [RETENTION_HOURS], and the original text kept
+     * alongside them.
+     *
+     * The proposal promises notification content does not accumulate on the
+     * device. It cannot promise the content is never stored at all, because
+     * the replacement notification has to be able to show the user the message
+     * it dismissed, and that means keeping it. Bounded retention is the honest
+     * version of that promise, and this is where it is enforced.
+     */
+    private fun pruneExpired(entries: JSONArray): JSONArray {
+        val cutoff = System.currentTimeMillis() - RETENTION_HOURS * 3_600_000L
+        val kept = JSONArray()
+        val keptIds = mutableSetOf<String>()
+
+        for (i in 0 until entries.length()) {
+            val entry = entries.optJSONObject(i) ?: continue
+            val time = parseIso(entry.optString("time"))
+            if (time != null && time < cutoff) continue
+            kept.put(entry)
+            keptIds.add(entry.optString("id"))
+        }
+
+        if (kept.length() != entries.length()) {
+            prefs.edit().putString(KEY_LOGS, kept.toString()).apply()
+            forgetOriginalsExcept(keptIds)
+        }
+
+        return kept
+    }
+
+    private fun parseIso(value: String?): Long? {
+        if (value.isNullOrEmpty()) return null
+        return try {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+                .parse(value)?.time
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /** Removes stored originals whose log entry is gone. */
+    private fun forgetOriginalsExcept(keepIds: Set<String>) {
+        val originals = JSONObject(prefs.getString(KEY_ORIGINALS, "{}") ?: "{}")
+        val trimmed = JSONObject()
+        for (key in originals.keys()) {
+            if (keepIds.contains(key)) trimmed.put(key, originals.get(key))
+        }
+        prefs.edit().putString(KEY_ORIGINALS, trimmed.toString()).apply()
+    }
 
     fun record(
         id: String,

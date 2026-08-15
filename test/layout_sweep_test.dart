@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/test_overrides.dart';
 import 'package:pikir/core/router/app_router.dart';
 import 'package:pikir/core/router/screen_registry.dart';
 import 'package:pikir/core/theme/app_theme.dart';
@@ -18,7 +19,7 @@ import 'package:pikir/core/theme/app_theme.dart';
 /// often run their phones at a larger size; app.dart deliberately does not
 /// clamp it, which is only defensible if the layouts survive it.
 void main() {
-  Widget appAt(String route) => ProviderScope(
+  Widget appAt(String route) => mockScope(
     child: MaterialApp(
       key: ValueKey(route),
       theme: PikirTheme.light,
@@ -28,7 +29,7 @@ void main() {
     ),
   );
 
-  Widget scaled(String route, double textScale) => ProviderScope(
+  Widget scaled(String route, double textScale) => mockScope(
     child: MaterialApp(
       key: ValueKey('$route-$textScale'),
       theme: PikirTheme.light,

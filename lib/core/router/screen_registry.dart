@@ -16,7 +16,6 @@ import '../../features/intervention/screens/fallback_luring_screen.dart';
 import '../../features/intervention/screens/opportunity_cost_screen.dart';
 import '../../features/intervention/screens/tujuan_pinjaman_screen.dart';
 import '../../features/ledger/screens/ledger_screen.dart';
-import '../../features/ledger/screens/riwayat_keputusan_screen.dart';
 import '../../features/ledger/screens/tambah_utang_screen.dart';
 import '../../features/mitigation/screens/detail_bantuan_screen.dart';
 import '../../features/mitigation/screens/detail_pembiayaan_screen.dart';
@@ -347,12 +346,6 @@ final List<ScreenEntry> kScreenRegistry = [
     title: 'Tambah Utang Manual',
     group: ScreenGroup.ledger,
     builder: (_) => const TambahUtangScreen(),
-  ),
-  ScreenEntry(
-    route: Routes.ledgerRiwayat,
-    title: 'Riwayat Keputusan',
-    group: ScreenGroup.ledger,
-    builder: (_) => const RiwayatKeputusanScreen(),
   ),
 
   // --- Perkakas -------------------------------------------------------
