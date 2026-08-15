@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The adaptive launcher icon. Every device PIKIR runs on supports these, since
+  minSdk is 30, so this is the icon almost everyone actually sees; the PNGs in
+  mipmap-*/ic_launcher.png are the fallback for launchers that ignore adaptive
+  icons.
+
+  The shield sits on a plain light ground rather than on green: the mark is
+  itself green, and green on green would leave only the pale head readable at
+  launcher size.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/rupiah.dart';
+import '../../../core/platform/screen_channel.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/theme/tokens.dart';
@@ -24,6 +25,8 @@ class PengaturanScreen extends ConsumerWidget {
     final scannerEnabled = ref.watch(scannerEnabledProvider);
     final fund = ref.watch(emergencyFundProvider);
     final permissions = ref.watch(permissionStatusProvider);
+    final screenWatch = ref.watch(screenWatchEnabledProvider);
+    final watchedApps = ref.watch(watchedAppsProvider);
 
     final income = profile.value?.monthlyIncome;
     final tierOne = fund.value?.tiers.firstOrNull?.target;
@@ -74,6 +77,23 @@ class PengaturanScreen extends ConsumerWidget {
                           'dari ${permissions.value!.total} izin aktif',
                 onTap: () =>
                     Navigator.of(context).pushNamed(Routes.pengaturanIzin),
+              ),
+              // The switch beside the permission, not instead of it. Turning
+              // this off leaves the permission granted but stops PIKIR reading
+              // anything, so somebody who wants a quiet afternoon does not have
+              // to dig through Android's accessibility settings and then
+              // remember to put it back.
+              SettingsToggleRow(
+                label: 'Deteksi layar',
+                detail: watchedApps.value == null
+                    ? 'Mengenali checkout paylater dan aplikasi pinjaman'
+                    : 'Mengenali checkout paylater dan aplikasi pinjaman di '
+                          '${watchedApps.value!.length} aplikasi terdaftar',
+                value: screenWatch.value ?? false,
+                onChanged: (value) async {
+                  await ScreenChannel.setScreenWatchEnabled(enabled: value);
+                  ref.invalidate(screenWatchEnabledProvider);
+                },
               ),
               SettingsToggleRow(
                 label: 'Pemindai notifikasi',

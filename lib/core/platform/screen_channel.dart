@@ -49,6 +49,26 @@ abstract final class ScreenChannel {
   static Future<void> openOverlaySettings() =>
       _guard(() => _channel.invokeMethod<void>('openOverlaySettings'));
 
+  /// Whether screen detection is switched on inside PIKIR.
+  ///
+  /// Separate from [hasScreenAccess], which is Android's permission. Both have
+  /// to be true for an interception to fire, and they fail for different
+  /// reasons: the permission is granted on a settings screen, this is the
+  /// user's own switch.
+  ///
+  /// Defaults to true off-device so tests and other hosts describe the
+  /// intended behaviour rather than a disabled app.
+  static Future<bool> screenWatchIsEnabled() async =>
+      await _guard(() => _channel.invokeMethod<bool>('screenWatchIsEnabled')) ??
+      true;
+
+  static Future<void> setScreenWatchEnabled({required bool enabled}) =>
+      _guard(
+        () => _channel.invokeMethod<void>('screenWatchSetEnabled', {
+          'enabled': enabled,
+        }),
+      );
+
   /// Sends PIKIR to the background, uncovering the app underneath.
   ///
   /// What "Lanjut ke aplikasi" has to do after a real trigger: the user asked

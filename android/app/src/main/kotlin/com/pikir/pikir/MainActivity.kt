@@ -125,6 +125,16 @@ class MainActivity: FlutterActivity() {
                     "watchedApps" -> {
                         result.success(TriggerRules.watchedPackages.toList())
                     }
+                    // The in-app switch, separate from the OS permission. See
+                    // WatcherSettings for why both exist.
+                    "screenWatchIsEnabled" -> {
+                        result.success(WatcherSettings(this).isEnabled)
+                    }
+                    "screenWatchSetEnabled" -> {
+                        WatcherSettings(this).isEnabled =
+                            call.argument<Boolean>("enabled") ?: true
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }

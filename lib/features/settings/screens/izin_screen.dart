@@ -92,6 +92,14 @@ class _IzinScreenState extends ConsumerState<IzinScreen>
                       _PermissionCard(
                         permission: permission,
                         granted: data.isGranted(permission),
+                        // Granted but switched off inside PIKIR is a state
+                        // the user can otherwise only discover by wondering
+                        // why nothing happens.
+                        pausedInApp:
+                            permission == PikirPermission.screenAccess &&
+                            data.isGranted(permission) &&
+                            ref.watch(screenWatchEnabledProvider).value ==
+                                false,
                         // The dialog answers inside the app, so nothing else
                         // triggers a re-read the way returning from settings
                         // does.
@@ -214,11 +222,15 @@ class _PermissionCard extends StatelessWidget {
     required this.permission,
     required this.granted,
     required this.onRequested,
+    this.pausedInApp = false,
   });
 
   final PikirPermission permission;
   final bool granted;
   final VoidCallback onRequested;
+
+  /// Android has granted it, but PIKIR's own switch is off.
+  final bool pausedInApp;
 
   @override
   Widget build(BuildContext context) {
@@ -247,6 +259,38 @@ class _PermissionCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(permission.what, style: PikirText.body),
+          if (pausedInApp) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: PikirColors.cautionContainer,
+                borderRadius: BorderRadius.circular(PikirRadius.input),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.pause_circle_outline_rounded,
+                    size: 16,
+                    color: PikirColors.caution,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Izinnya aktif, tapi deteksi layar sedang kamu matikan '
+                      'lewat Pengaturan. Nyalakan lagi kalau mau PIKIR '
+                      'menjaga.',
+                      style: PikirText.caption,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

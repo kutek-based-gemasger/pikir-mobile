@@ -69,38 +69,52 @@ class _SplashScreenState extends State<SplashScreen> {
           padding: const EdgeInsets.symmetric(
             horizontal: PikirSpacing.screenHorizontal,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          // Stacked rather than a Column with Spacers on either side. Spacers
+          // share out what is left after the footer, which pushed the mark
+          // above the optical centre by half the footer's height; here the
+          // mark is centred on the screen and the footer sits under it without
+          // moving it.
+          child: Stack(
             children: [
-              const Spacer(flex: 3),
-              const PikirMark(size: 88, onDark: true, showWordmark: false),
-              const SizedBox(height: 24),
-              Text(
-                'PIKIR',
-                style: PikirText.headlineLarge.copyWith(
-                  color: PikirColors.onPrimary,
-                  letterSpacing: 2,
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const PikirLogo(size: 132),
+                    const SizedBox(height: 22),
+                    Text(
+                      'PIKIR',
+                      style: PikirText.headlineLarge.copyWith(
+                        color: PikirColors.onPrimary,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Pikir dulu, baru pinjam.',
+                      textAlign: TextAlign.center,
+                      style: PikirText.body.copyWith(
+                        color: PikirColors.onPrimary.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Pikir dulu, baru pinjam.',
-                textAlign: TextAlign.center,
-                style: PikirText.body.copyWith(
-                  color: PikirColors.onPrimary.withValues(alpha: 0.9),
-                ),
-              ),
-              const Spacer(flex: 4),
               // Said here, before anything is asked for, rather than buried in
               // a privacy screen the user reaches later.
-              Text(
-                'Tanpa akun. Tanpa data pribadi.',
-                textAlign: TextAlign.center,
-                style: PikirText.caption.copyWith(
-                  color: PikirColors.onPrimary.withValues(alpha: 0.75),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 28),
+                  child: Text(
+                    'Tanpa akun. Tanpa data pribadi.',
+                    textAlign: TextAlign.center,
+                    style: PikirText.caption.copyWith(
+                      color: PikirColors.onPrimary.withValues(alpha: 0.75),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 28),
             ],
           ),
         ),

@@ -1,7 +1,24 @@
 # PIKIR Mobile — Handoff
 
-Status per 15 Agustus 2026. Berkas ini untuk anggota tim yang membaca repo ini
+Status per 16 Agustus 2026. Berkas ini untuk anggota tim yang membaca repo ini
 tanpa konteks percakapan sebelumnya, dan untuk menyusun Bab IV proposal.
+
+**Kalau waktumu cuma lima menit:** baca bagian 1 (status), 3 (backlog), lalu
+bagian 10 (sisa pekerjaan). Bagian 4 adalah katalog cara kerja tiap fitur,
+lengkap dengan input dan outputnya — dibaca saat butuh, bukan berurutan.
+
+| | Bagian |
+|---|---|
+| 1 | Ringkasan status |
+| 2 | Hal paling penting untuk diketahui lebih dulu |
+| 3 | Product Backlog |
+| 4 | **Katalog fitur: mekanisme, input, dan output** |
+| 5 | Layar: sudah jadi dan masih placeholder |
+| 6 | Yang sudah dikerjakan, per bidang |
+| 7 | Ketidaksesuaian dengan proposal |
+| 8 | Cara menjalankan dan menguji |
+| 9 | Yang perlu diperhatikan sebelum merekam demo |
+| 10 | Sisa pekerjaan |
 
 ---
 
@@ -10,7 +27,7 @@ tanpa konteks percakapan sebelumnya, dan untuk menyusun Bab IV proposal.
 | | |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 130 tes, semua lulus |
+| `flutter test` | 134 tes, semua lulus |
 | `flutter build apk --debug` | Berhasil |
 | Rute terdaftar | 42 |
 | Layar sudah jadi | 27 |
@@ -51,20 +68,20 @@ criteria dan teruji pada perangkat, dengan respons Backend disuplai data
 statis. Status **Done (penuh)** berarti item itu memang tidak memerlukan server
 dan sudah selesai seutuhnya.
 
-| ID | User Story | MoSCoW | SP | Sprint | Status |
-|---|---|---|---|---|---|
-| PB-01 | Fondasi arsitektur klien, ledger tiga field, kontrak Mock API | Must | 15 | 1 | Done (penuh) |
-| PB-02 | Klasifikasi kebutuhan otonom / pertanyaan interaktif singkat | Must | 8 | 1 | Done (kontrak Mock API) |
-| PB-03 | Opportunity cost, rasio 30%, simulasi menunda | Must | 13 | 2 | Done (kontrak Mock API) |
-| PB-04 | Kebutuhan mendesak diantar tanpa pertanyaan tambahan | Must | 10 | 2 | Done (kontrak Mock API) |
-| PB-05 | Informasi program bantuan resmi bersumber | Must | 8 | 3 | Done (kontrak Mock API) |
-| PB-06 | Kebutuhan bertahan hidup ke bantuan sosial, bukan pinjaman | Must | 8 | 3 | Done (kontrak Mock API) |
-| PB-07 | Uji kelayakan margin & payback, opsi diurutkan waktu cair | Must | 16 | 4 | Done (kontrak Mock API) |
-| PB-08 | Target dana darurat bertingkat + pengingat | Must | 8 | 4 | **In Progress** |
-| PB-09 | Tanya bebas, jawaban bersitasi, tolak topik luar | Must | 23 | 5 | **In Progress** |
-| PB-12 | Deteksi pemicu on-device: AccessibilityService, whitelist aplikasi, deteksi checkout + paylater | Must | 13 | 4 | Done (penuh) |
-| PB-10 | Notifikasi mencurigakan dihapus senyap + peringatan edukatif | Should | 13 | 6 | Done (penuh) |
-| PB-11 | Istilah bahasa sehari-hari + riwayat keputusan | Should | 8 | 6 | Done (penuh) |
+| ID | User Story | MoSCoW | SP | Sprint | Status | Sisa |
+|---|---|---|---|---|---|---|
+| PB-01 | Fondasi arsitektur klien, ledger tiga field, kontrak Mock API | Must | 15 | 1 | Done (penuh) | — |
+| PB-02 | Klasifikasi kebutuhan otonom / pertanyaan interaktif singkat | Must | 8 | 1 | Done (kontrak Mock API) | Ganti mock dengan endpoint |
+| PB-03 | Opportunity cost, rasio 30%, simulasi menunda | Must | 13 | 2 | Done (kontrak Mock API) | Ganti mock dengan endpoint |
+| PB-04 | Kebutuhan mendesak diantar tanpa pertanyaan tambahan | Must | 10 | 2 | Done (kontrak Mock API) | Ganti mock dengan endpoint |
+| PB-05 | Informasi program bantuan resmi bersumber | Must | 8 | 3 | Done (kontrak Mock API) | Data program masih fixture |
+| PB-06 | Kebutuhan bertahan hidup ke bantuan sosial, bukan pinjaman | Must | 8 | 3 | Done (kontrak Mock API) | Ganti mock dengan endpoint |
+| PB-07 | Uji kelayakan margin & payback, opsi diurutkan waktu cair | Must | 16 | 4 | Done (kontrak Mock API) | Data pembiayaan masih fixture |
+| PB-08 | Target dana darurat bertingkat + pengingat | Must | 8 | 4 | **In Progress** | 3 layar |
+| PB-09 | Tanya bebas, jawaban bersitasi, tolak topik luar | Must | 23 | 5 | **In Progress** | 2 layar |
+| PB-12 | Deteksi pemicu on-device: AccessibilityService, whitelist aplikasi, deteksi checkout + paylater | Must | 13 | 4 | Done (penuh) | Verifikasi 8 nama paket |
+| PB-10 | Notifikasi mencurigakan dihapus senyap + peringatan edukatif | Should | 13 | 6 | Done (penuh) | AC terpenuhi; 3 layar riwayat menyusul di luar AC |
+| PB-11 | Istilah bahasa sehari-hari + riwayat keputusan | Should | 8 | 6 | Done (penuh) | — |
 
 **Must: 91 dari 122 SP = 74,6% Done.** Item Should dan Could dikeluarkan dari
 penyebut. Item *In Progress* **tidak dihitung** — Definition of Done bersifat
@@ -88,7 +105,321 @@ adaptasi backlog di Bab IV.
 
 ---
 
-## 4. Layar
+## 4. Katalog fitur: mekanisme, input, dan output
+
+Bagian ini menjawab "fitur ini sebenarnya kerjanya bagaimana". Tiap fitur ditulis
+dengan urutan yang sama: **apa yang memicunya → apa yang masuk → apa yang
+diproses → apa yang keluar**. Nama berkas disertakan supaya bisa langsung dibuka.
+
+Yang perlu diingat saat membaca: bagian **proses** untuk Fitur 1, 2, 4, dan 5
+dijalankan oleh kontrak Mock API di dalam perangkat, bukan server. Aturannya
+nyata dan deterministik, jadi bisa didemokan dan diuji, tapi belum ada model atau
+kecerdasan apa pun di baliknya.
+
+---
+
+### Fitur 1 — Intervensi preventif
+
+**Berkas:** `ScreenWatcherService.kt`, `TriggerRules.kt`,
+`lib/features/intervention/`
+
+#### Pemicu
+
+Dua jalur, dan syaratnya berbeda. Ini bagian yang paling sering salah dipahami:
+
+| Jalur | Syarat menyala | Kenapa begitu |
+|---|---|---|
+| Aplikasi pinjaman | Paket ada di whitelist **dan** jendelanya berganti (`TYPE_WINDOW_STATE_CHANGED`) | Membuka aplikasi pinjol sudah cukup jadi tanda |
+| Checkout paylater | Teks layar mengandung kata checkout **DAN** kata paylater | Satu syarat saja akan menginterupsi tiap belanja biasa, dan penggunanya akan belajar menutup PIKIR tanpa membaca |
+
+Pengaman lain di lapisan ini:
+
+- **Jeda 30 detik** antar pemicu, supaya satu sesi belanja tidak diblokir
+  berkali-kali.
+- **Maksimal 400 node** dibaca per layar, supaya pembacaan tidak membebani HP.
+- Cakupannya dibatasi Android sendiri lewat `android:packageNames` di
+  `accessibility_service_config.xml` — di luar daftar itu, sistem operasi tidak
+  pernah mengirim event apa pun ke PIKIR.
+
+#### Input
+
+| Yang masuk | Dari mana | Contoh |
+|---|---|---|
+| Nama paket | AccessibilityService | `com.fintopia.idnEasycash.google` |
+| Teks layar | Pembacaan node, dibuang setelah dipakai | "Checkout... Bayar nanti... Rp1.250.000" |
+| Nominal | Regex `rp\s?([0-9][0-9.,]{3,})` | `1250000` |
+
+Ekstraksi nominal mengambil **angka terbesar** di layar dan mengabaikan yang di
+bawah Rp10.000, karena angka kecil biasanya harga satuan atau ongkir, bukan total
+yang akan dikomitmen penggunanya.
+
+#### Proses
+
+1. Layar diblokir seketika dengan layar selimut (`blanket_screen.dart`).
+2. Analisis dijalankan dengan **tenggat keras 3 detik**
+   (`kInterventionTimeout`) memakai `.timeout()`, bukan balapan dengan
+   `Future.delayed` — versi balapan meninggalkan timer hidup di belakang tiap
+   intervensi.
+3. Aturan mock: hitung rasio beban sekarang, dan rasio seandainya cicilan ini
+   ditambahkan.
+
+#### Output
+
+Tiga akhir yang mungkin, semuanya sudah jalan:
+
+| Kondisi | Hasil | Layar |
+|---|---|---|
+| Selisih rasio ≥ 2 poin persen | Layar biaya kesempatan | `opportunity_cost_screen.dart` |
+| Selisih rasio < 2 poin persen | Langsung tawaran catat ke ledger | `catat_ledger_screen.dart` |
+| Tidak ada jawaban dalam 3 detik, atau gagal | Layar luring + ajakan tarik napas | `fallback_luring_screen.dart` |
+
+Di layar biaya kesempatan, penggunanya diberi **tiga pilihan berukuran sama**:
+menunda dan menabung, mencatat ke ledger, atau tetap lanjut. Yang terakhir pakai
+tahan 5 detik — friksinya ada di gerakan, bukan di menyembunyikan tombolnya.
+
+Jalur aplikasi pinjaman bercabang lebih dulu lewat pertanyaan **"Kamu mau ngutang
+buat apa?"**: jawaban *mendesak atau modal* menyerahkan ke Fitur 2, jawaban
+*konsumtif* meminta penggunanya mengetik sendiri nama barangnya (tidak pernah
+ditebakkan aplikasi) lalu masuk ke biaya kesempatan.
+
+**Keluar dari intervensi:** "Lanjut ke aplikasi" memanggil `moveTaskToBack`, jadi
+penggunanya kembali ke aplikasi yang tadi dibuka — bukan berpindah lebih dalam ke
+PIKIR. Dari Mode Demo tidak ada aplikasi di bawah, jadi tombol yang sama kembali
+ke layar demo.
+
+---
+
+### Fitur 2 — Routing mitigasi
+
+**Berkas:** `lib/features/mitigation/`, `lib/data/models/mitigation.dart`
+
+#### Input
+
+| Langkah | Yang ditanyakan | Wajib untuk |
+|---|---|---|
+| 1 | Kebutuhannya untuk apa (5 pilihan) | Semua jalur |
+| 2 | Berapa yang benar-benar dibutuhkan | Semua jalur |
+| 3 | Untung bersih per bulan | Hanya jalur produktif |
+
+Jalur konsumtif dan mendesak berhenti di 2 langkah, produktif 3.
+
+#### Proses: percabangan tiga, bukan dua
+
+Topik menentukan jalur secara otomatis. Penggunanya tidak pernah diminta menilai
+sendiri seberapa mendesak kebutuhannya:
+
+| Topik yang dipilih | Jalur |
+|---|---|
+| Barang atau keinginan | **Konsumtif** |
+| Modal atau alat kerja | **Produktif** |
+| Kesehatan, kebutuhan hidup, pendidikan | **Kebutuhan mendesak** |
+
+#### Output per jalur
+
+| Jalur | Yang ditampilkan | Yang **tidak boleh** muncul |
+|---|---|---|
+| Konsumtif | Biaya kesempatan, simulasi menabung | Produk pinjaman, bantuan sosial |
+| Kebutuhan mendesak | Program bantuan resmi dan hak-hak penggunanya | Produk pinjaman, pada bunga berapa pun |
+| Produktif | Uji kelayakan, lalu opsi pembiayaan | — |
+
+Uji kelayakan pada jalur produktif:
+
+```
+payback (hari) = nominal ÷ (untung bersih bulanan ÷ 30)
+layak          = untung bersih > 0  DAN  payback ≤ 90 hari
+```
+
+Hasilnya selalu disertai kalimat hitungannya, supaya bisa diperiksa penggunanya
+dan bukan vonis yang turun entah dari mana.
+
+**Opsi pembiayaan diurutkan berdasarkan kecepatan cair, bukan bunga termurah.**
+Ini disengaja: orang yang motornya rusak hari ini tidak bisa menunggu tiga hari
+demi bunga yang lebih rendah, dan menyembunyikan yang cepat justru mendorongnya
+balik ke pinjol. Semua biaya — pokok, bunga, biaya layanan, biaya admin, dan
+total yang harus dikembalikan — ditampilkan sebelum keputusan diambil.
+
+**Aturan §6.7 ditegakkan di tingkat model, bukan di UI.** `MitigationResult`
+menolak dibangun kalau opsi pembiayaan menempel pada hasil konsumtif atau
+kebutuhan mendesak, dan sebaliknya untuk program bantuan. Artinya melanggar
+aturan ini bukan bug tampilan yang bisa lolos sampai ke rekaman — aplikasinya
+gagal saat dikembangkan.
+
+---
+
+### Fitur 3 — Pemindai notifikasi
+
+**Berkas:** `NotificationService.kt`, `NotificationClassifier.kt`,
+`ScanLogStore.kt`
+
+#### Input
+
+Judul dan isi tiap notifikasi yang masuk, dari aplikasi mana pun **kecuali PIKIR
+sendiri**. Pengecualian itu wajib: tanpanya, notifikasi pengganti yang PIKIR
+pasang akan ikut dipindai lalu diganti lagi, tanpa henti.
+
+#### Proses
+
+1. **Normalisasi**: huruf dikecilkan, lalu huruf berulang diciutkan. Ini yang
+   membuat `caiiiir` dan `cair` dianggap sama — trik paling umum untuk lolos dari
+   filter kata.
+2. **15 frasa predatoris** dicek, masing-masing punya alasan yang ikut
+   ditampilkan ke penggunanya. Contoh: *"tanpa BI checking"* → *"Menghindari
+   pemeriksaan yang wajib pada pemberi pinjaman resmi."*
+3. Kalau tidak ada yang cocok, **4 pola tagihan** dicek (`jatuh tempo`,
+   `bayar minimum`, `segera bayar`, `tagihan ...`).
+
+Penanda `// TODO(ml)` sudah dipasang di titik ini untuk penggantian TFLite nanti.
+
+#### Output
+
+| Hasil | Yang terjadi |
+|---|---|
+| **Mencurigakan** | Notifikasi aslinya dihapus senyap, PIKIR memasang notifikasi edukatif sebagai gantinya |
+| **Tagihan** | Hanya dicatat. **Tidak pernah dihapus** — tagihan asli itu urusan penggunanya sendiri |
+| **Aman** | Hanya dicatat di riwayat |
+
+Notifikasi pengganti **selalu** membawa dua aksi berukuran sama: **"Lihat
+alasannya"** dan **"Tampilkan pesan aslinya"**. Yang kedua tidak boleh hilang
+dalam keadaan apa pun — penggunanya tidak pernah boleh dikunci dari pesannya
+sendiri.
+
+**Yang disimpan:** potongan 120 karakter beserta pesan aslinya (supaya bisa
+ditampilkan lagi), terhapus otomatis dalam 24 jam. Lihat bagian ketidaksesuaian
+proposal: klaim "tidak disimpan sama sekali" tidak bisa digabung dengan fitur ini.
+
+---
+
+### Fitur 4 — Dana darurat bertingkat
+
+**Berkas:** `lib/features/emergency_fund/`, `MockEmergencyFundRepository`
+
+#### Input
+
+Pengeluaran wajib bulanan, dan seberapa sering pekerjaannya berhenti (risiko
+kerja).
+
+#### Proses
+
+```
+Tingkat 1 = bulatkan(pengeluaran wajib × bobot risiko ÷ 2, ke 50.000)
+Tingkat 2 = Tingkat 1 × 2
+Tingkat 3 = pengeluaran wajib × 3
+```
+
+Disusun dari angka penggunanya sendiri, bukan dari patokan "3–6 bulan gaji" yang
+tidak bertahan kalau penghasilannya harian. Tingkat 3 ditandai opsional justru
+karena untuk kebanyakan pengguna sasaran, angka itu memang jauh.
+
+#### Output
+
+Tiga target, masing-masing dengan keterangan **apa yang ditutupnya** (misal:
+"Menutup satu kejadian: servis motor atau berobat mendadak"), plus posisi
+tabungan sekarang. Tanpa streak, tanpa poin, tanpa perbandingan dengan pengguna
+lain.
+
+---
+
+### Fitur 5 — Tanya PIKIR
+
+**Berkas:** `lib/features/chat/`, `lib/data/models/chat.dart`
+
+#### Input
+
+Pertanyaan bebas. Yang dikirim ke pemroses hanya **10 pesan terakhir**, bukan
+seluruh riwayat.
+
+#### Proses
+
+Penolakan topik luar dicek lebih dulu: pertanyaan soal saham, kripto, atau
+trading dijawab dengan penolakan yang menyebutkan batas kemampuan aplikasi, bukan
+dijawab asal.
+
+#### Output
+
+Jawaban yang membawa sitasi sumber, dengan dua aturan sesi:
+
+| Aturan | Nilai | Alasannya |
+|---|---|---|
+| Sesi jadi hanya-baca | Setelah 2 jam tanpa aktivitas | Percakapan lama bukan konteks yang aman untuk dilanjutkan |
+| Riwayat dihapus | 24 jam | Ditegakkan di lapisan penyimpanan, jalan tiap basis data dibuka |
+
+Chat juga bisa dimasuki konteks dari layar lain: tombol "Tanya lebih lanjut" di
+kartu rute mitigasi membuka sesi yang sudah tahu sedang membahas apa.
+
+---
+
+### Ledger utang
+
+**Berkas:** `lib/features/ledger/`, `debt_entry.dart`
+
+#### Input
+
+| Sumber | Kapan |
+|---|---|
+| Otomatis | Penggunanya memilih lanjut setelah intervensi |
+| Manual | Form "Tambah" di Ledger |
+
+Satu catatan berisi: keperluan (kata-kata penggunanya sendiri), pokok, cicilan per
+bulan, kategori (boleh dikosongkan), sumber, dan tanggal.
+
+#### Proses
+
+```
+rasio beban = total cicilan bulanan utang berjalan ÷ penghasilan bulanan
+batas aman  = 30%   (patokan umum, bukan aturan — tiap layar menyebutkannya begitu)
+```
+
+Cicilan yang belum diisi ditulis **"Cicilan belum diisi"**, bukan "Rp0 per bulan"
+— kosong artinya belum diketahui, dan bedanya penting karena angka inilah yang
+membentuk rasio.
+
+#### Output
+
+Total utang aktif, rasio beban dengan status berkata-kata, dan daftar catatan.
+Dua aksi per catatan:
+
+| Aksi | Efek | Bisa dibatalkan? |
+|---|---|---|
+| **Tandai lunas** | Catatan tetap ada, keluar dari total dan dari rasio | Ya |
+| **Hapus catatan** | Barisnya hilang permanen, pakai tahan 5 detik | Tidak |
+
+---
+
+### Lapisan penyimpanan
+
+**Berkas:** `pikir_database.dart`, `secure_key_store.dart`
+
+| Hal | Nilai |
+|---|---|
+| Basis data | SQLite via SQLCipher, **AES-256** |
+| Kunci | 256 bit dari sumber acak kriptografis, disimpan di **Android Keystore** |
+| Versi skema | 2 (`settled_at` ditambah lewat `ALTER TABLE`, bukan drop-recreate) |
+| Keluar jaringan | Tidak ada sama sekali |
+| Hapus semua data | Menghancurkan kuncinya **dan** berkas basis datanya |
+
+Penghapusan berkas itu bukan kelebihan: mengosongkan tabel saja akan meninggalkan
+ciphertext di disk yang terenkripsi dengan kunci yang sudah dihancurkan, dan
+basis data itu tidak akan pernah bisa dibuka lagi.
+
+---
+
+### Izin dan layanan latar
+
+| Izin | Untuk apa | Kalau mati |
+|---|---|---|
+| Aksesibilitas | Mengenali checkout paylater dan pembukaan aplikasi pinjaman | Intervensi tidak pernah menyala |
+| Tampil di atas aplikasi lain | Menampilkan layar PIKIR di atas aplikasi lain | Pemicunya menyala tapi layarnya tidak pernah muncul |
+| Akses notifikasi | Membaca notifikasi yang masuk | Pemindai tidak menahan apa pun |
+| Mengirim notifikasi (Android 13+) | Memasang notifikasi pengganti | Pemindai jalan tapi penggunanya tidak diberi tahu |
+
+Semua dikelola dari satu halaman: **Pengaturan → Izin perlindungan**, yang juga
+muncul otomatis sekali tiap aplikasi dibuka selama masih ada izin yang mati.
+
+Kedua layanan Android berjalan terus meski UI PIKIR ditutup.
+
+---
+
+## 5. Layar
 
 ### Sudah jadi (27)
 
@@ -134,7 +465,7 @@ bercabang dua tempat pasti akan menyimpang satu sama lain.
 
 ---
 
-## 5. Yang sudah dikerjakan
+## 6. Yang sudah dikerjakan
 
 ### Fondasi
 
@@ -243,6 +574,57 @@ Terbukti di RMX3630: setelah satu utang ditandai lunas, beban di Beranda turun
 dari **21% ke 18%** dan totalnya dari Rp843.123 ke Rp720.000 — persis sebesar
 cicilan utang yang dilunasi.
 
+### Logo dan ikon aplikasi
+
+Logo PIKIR (perisai dengan siluet kepala dan otak) sekarang dipakai di tiga
+tempat, semuanya dari satu berkas `assets/brand/pikir_logo.png`:
+
+| Tempat | Bentuk |
+|---|---|
+| Splash | Perisai langsung di atas hijau, 132dp |
+| `PikirMark` | Perisai + wordmark, dipakai di app bar dan overlay |
+| Ikon launcher | Ikon adaptif Android: perisai di atas ground putih |
+
+Ikon launchernya dibuat ulang untuk 5 kerapatan layar sekaligus dalam dua
+bentuk: `ic_launcher_foreground.png` untuk **ikon adaptif** (kanvas 108dp,
+gambar dijaga di dalam zona aman 72dp supaya tidak terpotong topeng launcher)
+dan `ic_launcher.png` legacy untuk launcher yang mengabaikan ikon adaptif.
+Karena minSdk 30, yang hampir selalu terlihat adalah versi adaptifnya.
+
+Ground-nya putih, bukan hijau: marknya sendiri hijau, dan hijau di atas hijau
+hanya menyisakan kepala pucatnya yang terbaca pada ukuran ikon. Alasan yang sama
+membuat `PikirLogo` punya opsi `onDark` yang memberi piringan putih saat
+diletakkan di atas latar hijau.
+
+Berkas pembuatnya bukan skrip yang disimpan — kalau logonya diganti, jalankan
+ulang pembuatan ikon dari `assets/brand/pikir_logo.png` ke lima folder
+`mipmap-*`.
+
+### Saklar deteksi layar
+
+Sebelumnya deteksi layar hanya bisa dimatikan dengan mencabut izin
+aksesibilitas lewat pengaturan Android — merepotkan, dan gampang lupa
+menyalakannya lagi. Sekarang ada saklar di **Pengaturan → Deteksi layar**.
+
+Yang penting dipahami: **saklar ini bukan izinnya.** Keduanya harus hidup supaya
+intervensi menyala, dan keduanya mati karena sebab yang berbeda.
+
+| | Izin aksesibilitas | Saklar di aplikasi |
+|---|---|---|
+| Diberikan di | Pengaturan Android | Dalam PIKIR |
+| Disimpan di | Sistem operasi | `WatcherSettings`, SharedPreferences |
+| Default | Mati sampai diberikan | **Hidup** |
+
+Pengecekannya ditaruh di `onAccessibilityEvent` **sebelum** apa pun dibaca, jadi
+saat dimatikan PIKIR benar-benar berhenti melihat — bukan tetap membaca lalu
+diam saja. Barisnya juga menampilkan jumlah aplikasi terdaftar, dibaca dari
+whitelist Kotlin lewat channel, supaya angkanya tidak bisa menyimpang dari
+daftar yang sebenarnya mengatur deteksi.
+
+Halaman Izin perlindungan ikut menyebutkan keadaan "izin aktif tapi saklarnya
+mati", karena tanpa itu satu-satunya cara pengguna menemukannya adalah dengan
+heran kenapa tidak terjadi apa-apa.
+
 ### Pusat izin
 
 Satu halaman, `/pengaturan/izin`, dipakai dua arah: muncul otomatis sekali tiap
@@ -343,7 +725,7 @@ Demo, dan pastikan notifikasi PIKIR benar-benar muncul di panel.
 
 ### Pengujian
 
-130 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
+134 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
 
 - Tiga tombol di layar opportunity cost berlebar sama dan tetap aktif (§6.3).
 - Layar refleksi **tidak memuat satu piksel merah pun** — tes menyapu seluruh
@@ -359,7 +741,7 @@ Demo, dan pastikan notifikasi PIKIR benar-benar muncul di panel.
 
 ---
 
-## 6. Ketidaksesuaian dengan proposal yang harus diperbaiki
+## 7. Ketidaksesuaian dengan proposal yang harus diperbaiki
 
 Tiga hal ini **tidak bisa diperbaiki dengan mengubah kode saja**.
 
@@ -385,12 +767,12 @@ Kalimat §5.2 perlu disesuaikan.
 
 ---
 
-## 7. Cara menjalankan
+## 8. Cara menjalankan
 
 ```bash
 flutter pub get
 flutter run          # perlu Android SDK + JDK 17
-flutter test         # 103 tes
+flutter test         # 130 tes
 flutter analyze
 ```
 
@@ -446,7 +828,7 @@ Hasilnya harus byte acak. SQLite polos selalu diawali `53 51 4c 69 74 65` =
 
 ---
 
-## 8. Yang perlu diperhatikan sebelum merekam demo
+## 9. Yang perlu diperhatikan sebelum merekam demo
 
 **Whitelist aplikasi belum terverifikasi seluruhnya.** Nama paket yang salah
 **gagal senyap** — pemicu tidak pernah menyala, tanpa error apa pun. Baru 3
@@ -472,13 +854,14 @@ tidak boleh ikut terekam.
 
 ---
 
-## 9. Sisa pekerjaan, berdasarkan dampak ke penilaian
+## 10. Sisa pekerjaan, berdasarkan dampak ke penilaian
 
-1. **Onboarding (7 layar)** — pembuka video, paling terlihat juri.
+1. **Onboarding (5 layar)** — sisa pembuka video. Splash dan Tanpa Akun
+   sudah jadi.
 2. **UI pemindai notifikasi (3 layar)** — fitur 3 sudah bekerja di sisi sistem
    tapi belum punya antarmuka sama sekali.
 3. **Layar pendukung dana darurat dan chat (5 layar)** — ini yang menahan PB-08
    dan PB-09 di status In Progress.
 4. **Detail Rasio Utang** — dicapai dari "Lihat rincian" di Beranda.
 5. Verifikasi 8 nama paket yang tersisa.
-6. Penyesuaian tiga kalimat proposal di bagian 6 di atas.
+6. Penyesuaian tiga kalimat proposal di bagian 7 di atas.

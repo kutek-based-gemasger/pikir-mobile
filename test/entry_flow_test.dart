@@ -56,6 +56,40 @@ void main() {
     expect(find.text('Buka peta layar'), findsNothing);
   });
 
+  testWidgets('carries the PIKIR logo, not a placeholder glyph', (
+    tester,
+  ) async {
+    await launch(tester);
+
+    final logo = tester.widget<Image>(
+      find.descendant(
+        of: find.byType(PikirLogo),
+        matching: find.byType(Image),
+      ),
+    );
+    expect((logo.image as AssetImage).assetName, 'assets/brand/pikir_logo.png');
+  });
+
+  testWidgets('centres the mark on the screen, not above it', (tester) async {
+    await launch(tester);
+
+    // The footer used to sit in the same Column, so the Spacers shared out
+    // what was left after it and lifted the whole block 74px above centre —
+    // enough to read as "not quite right" without being obviously broken.
+    // Measured rather than eyeballed, because that is exactly the kind of
+    // drift nobody catches until it is on camera.
+    final screen = tester.getRect(find.byType(Scaffold).first);
+    final logo = tester.getRect(find.byType(PikirLogo));
+    final tagline = tester.getRect(find.text('Pikir dulu, baru pinjam.'));
+
+    final blockCentre = (logo.top + tagline.bottom) / 2;
+    expect(
+      (blockCentre - screen.center.dy).abs(),
+      lessThan(8),
+      reason: 'the mark sits ${blockCentre - screen.center.dy}px off centre',
+    );
+  });
+
   testWidgets('moves on by itself', (tester) async {
     await launch(tester);
     await pastSplash(tester);

@@ -37,44 +37,7 @@ class PikirMark extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // TODO(design): replace with the real logo asset, a green
-                // magnifier with "Rp" in the lens and an amber dot.
-                Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    color: onDark
-                        ? PikirColors.surface
-                        : PikirColors.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.search_rounded,
-                    size: size * 0.55,
-                    color: PikirColors.primary,
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Container(
-                    width: size * 0.24,
-                    height: size * 0.24,
-                    decoration: const BoxDecoration(
-                      color: PikirColors.accent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          PikirLogo(size: size, onDark: onDark),
           if (showWordmark) ...[
             const SizedBox(width: 8),
             Text(
@@ -87,6 +50,43 @@ class PikirMark extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The shield on its own, without the wordmark.
+///
+/// The mark is green, so on a green ground only the pale head inside it would
+/// carry. [onDark] puts it on a light plate for exactly that case rather than
+/// leaving it to half disappear.
+class PikirLogo extends StatelessWidget {
+  const PikirLogo({super.key, this.size = 40, this.onDark = false});
+
+  final double size;
+  final bool onDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final logo = Image.asset(
+      'assets/brand/pikir_logo.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      // Announced once by the PikirMark around it, or by the screen using it.
+      excludeFromSemantics: true,
+    );
+
+    if (!onDark) return SizedBox(width: size, height: size, child: logo);
+
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * 0.16),
+      decoration: const BoxDecoration(
+        color: PikirColors.surface,
+        shape: BoxShape.circle,
+      ),
+      child: logo,
     );
   }
 }

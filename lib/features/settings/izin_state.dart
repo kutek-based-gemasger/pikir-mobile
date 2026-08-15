@@ -120,6 +120,23 @@ final permissionStatusProvider = FutureProvider<PermissionStatus>((ref) async {
   });
 });
 
+/// Whether screen detection is switched on inside PIKIR.
+///
+/// Kept beside the permission state because the two are read together on the
+/// same rows: an interception needs the Android permission **and** this switch.
+final screenWatchEnabledProvider = FutureProvider<bool>(
+  (ref) => ScreenChannel.screenWatchIsEnabled(),
+);
+
+/// The apps the watcher is allowed to see, straight from the Kotlin whitelist.
+///
+/// Read from the platform rather than duplicated in Dart, so the number shown
+/// in Settings cannot drift away from the list that actually governs
+/// detection.
+final watchedAppsProvider = FutureProvider<List<String>>(
+  (ref) => ScreenChannel.watchedApps(),
+);
+
 /// Asks for [permission], however this particular one can be asked for.
 ///
 /// Three of them cannot be granted by the app at all: the best it can do is

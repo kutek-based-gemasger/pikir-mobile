@@ -34,6 +34,9 @@ class ScreenWatcherService : AccessibilityService() {
     private var lastTriggerPackage: String? = null
     private var lastTriggerAt = 0L
 
+    /** Read fresh on every event, so the switch takes effect immediately. */
+    private val settings by lazy { WatcherSettings(this) }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Log.i(TAG, "connected: watching ${TriggerRules.watchedPackages.size} apps")
@@ -44,6 +47,13 @@ class ScreenWatcherService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val packageName = event?.packageName?.toString() ?: return
         if (packageName == this.packageName) return
+
+        // Checked before anything is read, not after. When the user has
+        // switched detection off, the screen is not examined at all — the
+        // promise is that PIKIR stops looking, not that it looks and then
+        // keeps quiet about it.
+        if (!settings.isEnabled) return
+
         if (packageName !in TriggerRules.watchedPackages) return
 
         when {
