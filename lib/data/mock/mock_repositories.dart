@@ -9,6 +9,7 @@
 /// the mandatory offline fallback ever gets seen before it matters.
 library;
 
+import '../../core/format/rupiah.dart';
 import '../models/chat.dart';
 import '../models/debt_entry.dart';
 import '../models/decision_record.dart';
@@ -309,7 +310,11 @@ class MockMitigationRepository implements MitigationRepository {
             feasible: profit > 0 && paybackDays <= 90,
             explanation: profit <= 0
                 ? 'Belum bisa dihitung karena untung bersihnya belum diisi.'
-                : 'Dengan untung Rp${profit ~/ 1000} ribu per bulan, modalnya '
+                // formatRupiah, not a hand-rolled "ribu": dividing by a
+                // thousand rendered Rp1.500.000 as "Rp1500 ribu", which is
+                // both wrong and unreadable. Section 6 rule 6 asks for whole
+                // rupiah anyway.
+                : 'Dengan untung ${formatRupiah(profit)} per bulan, modalnya '
                       'kembali dalam sekitar $paybackDays hari.',
           ),
           financingOptions: options,

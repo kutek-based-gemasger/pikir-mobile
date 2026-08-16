@@ -127,4 +127,21 @@ void main() {
       }
     });
   });
+
+  test('states the profit as whole rupiah, not as "ribu"', () async {
+    // "Rp${profit ~/ 1000} ribu" rendered Rp1.500.000 as "Rp1500 ribu" on the
+    // feasibility screen, which is both wrong and unreadable. Section 6 rule 6
+    // asks for whole rupiah.
+    final result = await MockMitigationRepository().route(
+      const MitigationRequest(
+        topic: NeedTopic.modalAtauAlatKerja,
+        kind: NeedKind.produktif,
+        amount: 2000000,
+        monthlyNetProfit: 1500000,
+      ),
+    );
+
+    expect(result.feasibility!.explanation, contains('Rp1.500.000'));
+    expect(result.feasibility!.explanation, isNot(contains('ribu')));
+  });
 }

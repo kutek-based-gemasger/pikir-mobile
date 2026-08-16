@@ -20,6 +20,10 @@ lengkap dengan input dan outputnya — dibaca saat butuh, bukan berurutan.
 | 9 | Yang perlu diperhatikan sebelum merekam demo |
 | 10 | Sisa pekerjaan |
 
+Dua berkas terpisah untuk keperluan proposal, bukan untuk pembaca repo:
+`docs/proposal/BACKLOG.md` (revisi Tabel 4.2.1) dan
+`docs/proposal/BAB_VIII.md` (draf Bab VIII beserta dokumentasi penggunaan).
+
 ---
 
 ## 1. Ringkasan status
@@ -27,7 +31,7 @@ lengkap dengan input dan outputnya — dibaca saat butuh, bukan berurutan.
 | | |
 |---|---|
 | `flutter analyze` | No issues found |
-| `flutter test` | 134 tes, semua lulus |
+| `flutter test` | 137 tes, semua lulus |
 | `flutter build apk --debug` | Berhasil |
 | Rute terdaftar | 42 |
 | Layar sudah jadi | 27 |
@@ -62,6 +66,10 @@ enkripsi basis data lokal, dan ledger utang.
 ---
 
 ## 3. Product Backlog
+
+> Versi yang sudah diaudit ulang per item, lengkap dengan kolom bukti dan dua
+> perhitungan persentase, ada di **`docs/proposal/BACKLOG.md`**. Tabel di bawah
+> adalah ringkasannya.
 
 Status **Done (kontrak Mock API)** berarti alur klien memenuhi acceptance
 criteria dan teruji pada perangkat, dengan respons Backend disuplai data
@@ -725,7 +733,7 @@ Demo, dan pastikan notifikasi PIKIR benar-benar muncul di panel.
 
 ### Pengujian
 
-134 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
+137 tes, termasuk yang menjaga aturan produk agar tidak hilang diam-diam:
 
 - Tiga tombol di layar opportunity cost berlebar sama dan tetap aktif (§6.3).
 - Layar refleksi **tidak memuat satu piksel merah pun** — tes menyapu seluruh
